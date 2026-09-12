@@ -42,7 +42,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .detect import collect
+from .detect import examine
 from .findings import Finding
 from .readers import UnreadableFile, read
 
@@ -151,11 +151,12 @@ def read_one(path: Path, ocr: bool = False) -> FileResult:
         # read that kind of document yet, or could not read this one.
         return FileResult(path=path, refusal=str(exc))
 
+    findings, notes = examine(extraction, ocr=ocr)
     return FileResult(
         path=path,
         kind=extraction.kind,
-        findings=tuple(collect(extraction, ocr=ocr)),
-        remarks=tuple(extraction.remarks),
+        findings=tuple(findings),
+        remarks=tuple(extraction.remarks) + tuple(notes),
         searched=extraction.has_text,
     )
 

@@ -30,7 +30,7 @@ from pathlib import Path
 
 import pytest
 
-from unmasker.cli import collect
+from unmasker.detect import collect
 from unmasker.readers import read
 from unmasker.slides import SlideRecord, detect
 

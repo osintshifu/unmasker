@@ -9,6 +9,48 @@ release: `unmasker.scan/1` for one file, `unmasker.survey/1` for a folder. A
 consumer should read that rather than the release number, because the release
 moves whenever anything does and the schema moves only when the shape changes.
 
+## [0.5.0] - 2026-09-12
+
+### Added
+
+- **`--render`: a shape drawn over text in a word processor.** A `.docx` says
+  there is a filled shape and says there is text and never says one is over
+  the other, because its text flows - where it lands is decided by the fonts
+  installed, the page size and the application opening it. Nothing read out of
+  the file can answer the question.
+
+  So the flag lays the document out with LibreOffice and looks at what got
+  painted, running the detectors that already know how to read a painted page.
+  It answers about **that rendering** rather than about the file: Word lays a
+  page out differently, and a bar that covers a name there may miss it here.
+  Every finding it makes is circumstantial and names the rendering it came
+  from, so a reader can see exactly what they would be disagreeing with.
+
+  It is off by default for a second reason as well. It hands the document to
+  another program, and a file built to attack a parser is then pointed at one.
+  The promise on the front page is worded about unmasker, not about everything
+  it can be asked to invoke.
+
+### Fixed
+
+- **Notes a detector made about its own coverage never reached the report.**
+  `_collect` rebound the extraction to carry them and returned only the
+  findings, so every one of those sentences was written and thrown away -
+  "ghostscript is missing, so this page was not read back" among them. That is
+  the difference between *searched and nothing there* and *nothing looked*,
+  discarded by the tool built to keep it. Found while wiring the flag above,
+  whose own note is the whole of its honesty, and proved by making a detector
+  emit one and watching it not arrive.
+
+  `collect` still answers what a file disagrees with itself about; `examine`
+  answers that and what the detectors could not do. The report uses the
+  second.
+
+- A `.docx` and an `.odt` did not remember the file they were read from, so
+  the branch that lays a document out never ran and the flag did nothing at
+  all. The two tests either side of that gap both passed, which is what a
+  third one now covers.
+
 ## [0.4.0] - 2026-09-12
 
 A minor version because the finding this tool is named for works on a family

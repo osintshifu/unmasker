@@ -56,6 +56,8 @@ which RFC 2606 reserves for the purpose.
 | [`pdf/pypdf-incremental-page-removed.pdf`](pdf/pypdf-incremental-page-removed.md) | LibreOffice 24.2, pypdf 6.16 | a one-page award notice | an earlier revision holding the annex that was deleted, reserve price and all |
 | [`doc/libreoffice-writer-word97.doc`](doc/libreoffice-writer-word97.md) | LibreOffice 24.2 Writer, exported to Word 97 | an award notice naming nobody | two names, a title marked *do not circulate* and a company, in the compound file's property streams |
 | [`doc/libreoffice-writer-word97-stories.doc`](doc/libreoffice-writer-word97-stories.md) | LibreOffice 24.2 Writer, exported to Word 97 | an award notice with a table, a header and a footnote | 237 of its 504 characters outside the main story — a comment, a header marked *internal circulation only*, a text box — and a hyperlink whose URL is on no page |
+| [`docx/libreoffice-writer-covered-text.docx`](docx/libreoffice-writer-covered-text.md) | LibreOffice 24.2 Writer | three lines, the middle one behind a black bar | a reserve price — which the file does not say is covered, because a word processor never says where its text falls |
+| [`odt/libreoffice-writer-covered-text.odt`](odt/libreoffice-writer-covered-text.md) | LibreOffice 24.2 Writer | the same three lines | the same, in the other container |
 | [`pptx/libreoffice-impress-covered-text.pptx`](pptx/libreoffice-impress-covered-text.md) | LibreOffice 24.2 Impress | two black bars, a line on a black band, one line clear | a name wholly behind a bar, a price half behind one — and the banner that must not be reported, which only painting order tells apart |
 | [`odp/libreoffice-impress-covered-text.odp`](odp/libreoffice-impress-covered-text.md) | LibreOffice 24.2 Impress | the same slide | the same four cases, with the fill a step away in a style and the size a measurement rather than a count |
 | [`docx/libreoffice-writer-hidden-run.docx`](docx/libreoffice-writer-hidden-run.md) | LibreOffice 24.2 Writer | two lines, one with a gap in it | a run carrying `w:vanish`, which Word does not draw |
@@ -199,11 +201,12 @@ Named here so their absence is not mistaken for coverage:
 - **Word's character formatting other than the hidden attribute**, and the
   objects a .doc carries in its `ObjectPool` storage. The report names the
   storage rather than opening it.
-- **A shape drawn over text in a word processor.** A slide states absolute
-  coordinates against a known slide size, so the check is computed there from
-  the file. A `.docx` or `.odt` lays its text out as it flows and never says
-  where the ink lands, so the same bar cannot be found without rendering the
-  document - which is a different piece of work, and an optional dependency.
+- **A shape drawn over text in a word processor, without an optional
+  dependency.** A slide states absolute coordinates, so the check is computed
+  from the file. A `.docx` or `.odt` states neither position, so `--render`
+  hands the document to LibreOffice and looks at what got painted - which
+  answers about a rendering rather than about the file, and needs a program
+  unmasker does not ship.
 - **Which characters are behind a bar on a slide.** A PDF stores glyph
   positions and the detector names the covered characters exactly. A slide
   stores the text box, so a partly covered box is reported as circumstantial

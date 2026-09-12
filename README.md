@@ -93,7 +93,8 @@ uv tool install unmasker
 
 Python 3.10 or later. The default install has one runtime dependency: `pypdf`.
 unmasker runs locally, makes no network requests and never modifies the file it
-is given.
+is given. Two optional flags call other programs — `--ocr` needs ghostscript and
+tesseract, `--render` needs LibreOffice — and both are off unless asked for.
 
 From a checkout:
 
@@ -138,6 +139,7 @@ unmasker ~/cases/kowalski --html > report.html
 | `--html` | one self-contained HTML report, ready to send to someone |
 | `--md` | Markdown for a wiki, a ticket or a pull request |
 | `--ocr` | render a page and read it back to catch mismatches without knowing the hiding technique |
+| `--render` | lay a word-processor document out with LibreOffice and look at what it paints |
 | `--width N` | wrap terminal output at N columns |
 | `--version` | print the version and exit |
 | `-h`, `--help` | show the full option list |
@@ -195,6 +197,10 @@ finding nothing.
 | whole files carried inside the document | PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP |
 | earlier revisions the file still holds | PDF |
 | metadata against the document's own text | PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, DOC, XLS, PPT, JPEG |
+
+`--render` adds DOCX and ODT to the first row, by laying the document out with
+LibreOffice and looking at what it paints. It answers about that rendering
+rather than about the file, so what it finds is circumstantial and says so.
 
 This table is checked against the readers, so it cannot drift away from what
 the code can actually see.
@@ -313,14 +319,14 @@ unmasker tests/specimens/docx
 ```
 
 ```text
-  unmasker  tests/specimens/docx                             5 of 10 files
+  unmasker  tests/specimens/docx                             6 of 12 files
   ────────────────────────────────────────────────────────────────────────
-    read      10 files, 19 findings
+    read      12 files, 20 findings
     not read  0 files
 
   what was found                                                  12 kinds
   ────────────────────────────────────────────────────────────────────────
-    undisclosed-metadata  2 files
+    undisclosed-metadata  3 files
     attached-file         1 file
     hidden-sheet          1 file
     zero-width            1 file
@@ -333,8 +339,9 @@ unmasker tests/specimens/docx
     comment               1 file
     revision-history      1 file
 
-  files that hide something                                        5 files
+  files that hide something                                        6 files
   ────────────────────────────────────────────────────────────────────────
+    libreoffice-writer-covered-text.docx       undisclosed-metadata
     libreoffice-writer-embedded-sheet.docx     attached-file, hidden-sheet
     libreoffice-writer-hidden-characters.docx  zero-width, bidi-control,
                                                tag-characters,
@@ -347,7 +354,7 @@ unmasker tests/specimens/docx
                                                revision-history
 
   ────────────────────────────────────────────────────────────────────────
-  searched 10 files. unmasker <file> for the detail, --json for all of it.
+  searched 12 files. unmasker <file> for the detail, --json for all of it.
 ```
 
 A directory scan reports what was read, what could not be read, which detector
@@ -494,7 +501,7 @@ unmasker tests/specimens/pdf/libreoffice-writer-image-over-text.pdf --json
 {
   "tool": "unmasker",
   "schema": "unmasker.scan/1",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "file": "tests/specimens/pdf/libreoffice-writer-image-over-text.pdf",
   "sha256": "d324105840b72c0d76c491150fe9220eabb4a87a3735afdb5de5af4c27fa0b66",
   "kind": "pdf",
@@ -564,7 +571,7 @@ human or a downstream system can decide what they mean.
 
 Every detector fires on a committed specimen written by a real producer,
 including LibreOffice, headless Chrome, Ghostscript, Tesseract, exiftool,
-ImageMagick, poppler and pypdf. There are 46 of them and each has a provenance note describing how
+ImageMagick, poppler and pypdf. There are 48 of them and each has a provenance note describing how
 it was produced, what a person sees and what is actually stored inside.
 
 This matters because real producers routinely disagree with assumptions made
@@ -583,7 +590,8 @@ and its output compared to the block printed beneath it.
 
 - No verdicts about whether a document was manipulated or malicious.
 - No writing to the input file and no network access.
-- The checks on what a page paints run on PDF only, and the reasons differ by format. A word processor lays its text out as it flows, so a `.docx` or `.odt` does not say where the ink lands and nothing short of rendering it can tell; a bar drawn over a paragraph is not found. A slide does say — every shape carries absolute coordinates against a known slide size — so the same check is possible on `.pptx` and `.odp` and is simply not written yet.
+- What a page paints is read straight from the file for PDF, and computed from the file for `.pptx` and `.odp`, where every shape carries absolute coordinates against a known slide size.
+- A word processor states neither. Its text flows, so a `.docx` or `.odt` says there is a filled shape and says there is text and never says one is over the other. `--render` answers it by laying the document out with LibreOffice and looking at what got painted — which means handing the file to another program, and answering about that rendering rather than about the file. Word lays a page out differently, so a bar that covers a name there may miss it here. Every finding from it is circumstantial and names the rendering it came from.
 - A `.doc` is read for its text as well as its metadata: the piece table, every story, and the property tables that say which characters are deleted or hidden. Its embedded objects are not opened, and character formatting other than the hidden attribute is not read.
 - `.xls` and `.ppt` are read for what they say about themselves, not for their text. The compound-file container and both property streams are read; the BIFF and PowerPoint record streams inside them are not.
 - Signature coverage is not checked. A signed PDF's `/ByteRange` says which bytes it covers, and no signed specimen could be produced to test a detector against.

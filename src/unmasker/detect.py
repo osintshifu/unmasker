@@ -6,6 +6,14 @@ borrow one function is a cycle waiting for the command line to import it back.
 
 Nothing here decides how anything is printed. It answers *what does this file
 disagree with itself about*, once, for whoever is asking.
+
+**Notes come back with the findings.** Several detectors learn something about
+their own coverage while running - a page that could not be rendered, a tool
+that is not installed, a document that could not be laid out - and that is the
+difference between *searched and nothing there* and *nothing looked*, which is
+the distinction this whole tool is built on. An earlier version rebound the
+extraction here to carry them and returned only the findings, so every one of
+those sentences was written and thrown away.
 """
 
 from __future__ import annotations
@@ -20,6 +28,7 @@ from .pdf.detectors import detect as detect_drawn
 from .pdf.detectors import unextractable_text, unrendered_text
 from .pdf.history import detect as detect_earlier
 from .pdf.rendered import read_page_back
+from .render import FLOWED, as_pdf, from_layout
 from .revisions import detect as detect_revisions
 from .sheets import detect as detect_sheets
 from .slides import detect as detect_slides
@@ -27,8 +36,19 @@ from .text.invisible import scan_text
 from .thumbnails import detect as detect_thumbnails
 
 
-def collect(extraction, ocr: bool = False) -> list[Finding]:
-    return _collect(extraction, ocr, descend=True)
+def collect(extraction, ocr: bool = False, render: bool = False) -> list[Finding]:
+    """What this file disagrees with itself about."""
+    return examine(extraction, ocr, render)[0]
+
+
+def examine(extraction, ocr: bool = False, render: bool = False):
+    """That, and what the detectors could not do.
+
+    Two entry points rather than one because almost every caller wants the
+    findings and nothing else, and a report is the one that must also say
+    where a detector was unable to look.
+    """
+    return _collect(extraction, ocr, render, descend=True)
 
 
 def _inside(attachments: tuple) -> list[Finding]:
@@ -65,7 +85,7 @@ def _inside(attachments: tuple) -> list[Finding]:
                 # A zip this tool does not read as a document. That it is there
                 # has already been said by `detect_attachments`.
                 continue
-            for finding in _collect(inner, ocr=False, descend=False):
+            for finding in _collect(inner, ocr=False, descend=False)[0]:
                 found.append(
                     dataclasses.replace(
                         finding,
@@ -77,7 +97,7 @@ def _inside(attachments: tuple) -> list[Finding]:
     return found
 
 
-def _collect(extraction, ocr: bool = False, *, descend: bool = True) -> list[Finding]:
+def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bool = True):
     """Run every text detector over every unit, tagging findings with the page.
 
     Detectors are additive and none outranks another: a unit with a bidi
@@ -85,6 +105,7 @@ def _collect(extraction, ocr: bool = False, *, descend: bool = True) -> list[Fin
     one against the other.
     """
     found: list[Finding] = []
+    notes: list[str] = []
     for unit in extraction.units:
         for finding in scan_text(unit.text):
             if unit.page is not None:
@@ -127,9 +148,23 @@ def _collect(extraction, ocr: bool = False, *, descend: bool = True) -> list[Fin
     if extraction.image is not None and extraction.source is not None:
         pictured, problems = detect_thumbnails(extraction.source, extraction.image, ocr=ocr)
         found.extend(pictured)
-        extraction = dataclasses.replace(
-            extraction, remarks=extraction.remarks + tuple(problems)
-        )
+        notes.extend(problems)
+
+    # A word processor does not say where its text falls, so the only way to
+    # ask whether a shape is drawn over any of it is to lay the document out
+    # and look. That hands the file to another program, which is why it waits
+    # to be asked for; every finding it makes says which rendering it is about.
+    if render and extraction.source is not None and extraction.kind in FLOWED:
+        import tempfile
+        from pathlib import Path
+
+        from .readers import read as read_file
+
+        with tempfile.TemporaryDirectory(prefix="unmasker-layout-") as folder:
+            laid, problems = as_pdf(Path(str(extraction.source)), Path(folder))
+            notes.extend(problems)
+            if laid is not None:
+                found.extend(from_layout(read_file(laid)))
 
     # Reading each page back costs a render and an OCR pass - seconds a page -
     # and needs two external binaries, which is why it was kept out
@@ -137,9 +172,7 @@ def _collect(extraction, ocr: bool = False, *, descend: bool = True) -> list[Fin
     if ocr and extraction.source is not None:
         for painted in extraction.drawn:
             words, problems = read_page_back(extraction.source, painted.number, painted.box)
-            extraction = dataclasses.replace(
-                extraction, remarks=extraction.remarks + tuple(problems)
-            )
+            notes.extend(problems)
             found.extend(unrendered_text(painted, words))
             found.extend(unextractable_text(painted, words))
 
@@ -169,4 +202,4 @@ def _collect(extraction, ocr: bool = False, *, descend: bool = True) -> list[Fin
             )
         )
 
-    return sorted(found, key=lambda f: f.location.sort_key)
+    return sorted(found, key=lambda f: f.location.sort_key), notes

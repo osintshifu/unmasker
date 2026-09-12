@@ -172,6 +172,7 @@ def read_odf(path: Path) -> Extraction:
 
     return Extraction(
         kind="odf",
+        source=path,
         units=tuple(units),
         remarks=tuple(remarks),
         revisions=record,

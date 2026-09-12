@@ -205,7 +205,7 @@ def test_a_user_defined_property_is_content_whatever_it_is_called():
 def test_one_odt_produces_five_kinds_of_finding():
     """A tracked deletion, a comment, the revision history, two metadata
     values and a zero-width space, from one file."""
-    from unmasker.cli import collect
+    from unmasker.detect import collect
 
     kinds = {f.detector for f in collect(read(SPECIMEN))}
     assert kinds == {
@@ -220,7 +220,7 @@ def test_one_odt_produces_five_kinds_of_finding():
 
 
 def test_the_zero_width_space_in_the_address_is_found():
-    from unmasker.cli import collect
+    from unmasker.detect import collect
 
     found = [f for f in collect(read(SPECIMEN)) if f.detector == "zero-width"]
     assert found and "h.probna" in found[0].human_sees

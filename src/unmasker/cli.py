@@ -19,13 +19,14 @@ through the one document it should have stopped.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import shutil
 import sys
 from pathlib import Path
 
 from . import SCHEMA, __version__, about
-from .detect import collect
+from .detect import examine
 from .html import render_file as render_html
 from .html import render_survey as render_survey_html
 from .markdown import render_file as render_md
@@ -108,6 +109,17 @@ def build_parser() -> argparse.ArgumentParser:
             "the default"
         ),
     )
+    parser.add_argument(
+        "--render",
+        action="store_true",
+        help=(
+            "lay a word-processor document out with LibreOffice and look at "
+            "what it paints, to find a shape drawn over text in a format that "
+            "does not say where its text falls. Hands the file to another "
+            "program, and answers about that rendering rather than about the "
+            "file, which is why it is not the default"
+        ),
+    )
     parser.add_argument("--version", action="version", version=f"unmasker {__version__}")
     return parser
 
@@ -184,7 +196,14 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 2
 
-    findings = collect(extraction, ocr=args.ocr)
+    findings, notes = examine(extraction, ocr=args.ocr, render=args.render)
+    if notes:
+        # What a detector learned about its own coverage. Dropping these is
+        # the tool losing the difference between "searched and nothing there"
+        # and "nothing looked", which is the one it exists to keep.
+        extraction = dataclasses.replace(
+            extraction, remarks=extraction.remarks + tuple(notes)
+        )
 
     if args.json:
         json.dump(

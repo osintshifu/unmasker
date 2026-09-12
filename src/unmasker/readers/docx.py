@@ -133,6 +133,7 @@ def read_docx(path: Path) -> Extraction:
 
     return Extraction(
         kind="docx",
+        source=path,
         units=tuple(units),
         remarks=tuple(remarks),
         revisions=record,
