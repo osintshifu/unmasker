@@ -165,7 +165,7 @@ Exit status is part of the interface:
 | Unicode | zero-width characters, bidi controls, tag characters, mixed scripts |
 | Word / ODT | tracked deletions, comments, revision history, metadata leaks |
 | Excel / Calc | hidden sheets, rows and columns, filtered rows, tracked cell changes |
-| PowerPoint / Impress | hidden slides, speaker notes, and a shape drawn over text on a slide |
+| PowerPoint / Impress | hidden slides, speaker notes, a shape drawn over text, and text parked beside a slide |
 | JPEG | stale EXIF thumbnails that can preserve content removed by cropping, and the XMP edit history an editor left behind |
 | Metadata | undisclosed values, local filesystem paths and conflicting metadata copies |
 | Legacy Word | a `.doc`'s text, story by story — body, footnotes, headers, footers, text boxes — with its comments, tracked changes and hidden runs |
@@ -187,7 +187,8 @@ finding nothing.
 | What is checked | Runs on |
 | :--- | :--- |
 | a filled shape or an image drawn over text | PDF, PPTX, ODP |
-| the rest of what the page paints: faint text, text the page does not paint, text off the page | PDF |
+| text placed where the page or the slide does not show it | PDF, PPTX, ODP |
+| faint text, and text the page does not paint at all | PDF |
 | characters in the text: zero-width, direction controls, tag characters, mixed scripts | PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, DOC, text |
 | text the file marks as not to be drawn | DOCX, ODT, DOC |
 | hidden sheets, rows and columns, and filtered rows | XLSX, ODS |
@@ -383,7 +384,7 @@ The detector slug is stable output intended for reports and automation.
 | `text-under-image` | text underneath an image, kept distinct from a filled-shape redaction |
 | `invisible-text` | text the file tells the application not to draw — a PDF render mode that paints nothing, or a Word run marked hidden |
 | `low-contrast-text` | text too close in colour to the background behind it |
-| `off-page-text` | text outside the visible page or crop box |
+| `off-page-text` | text outside the visible page or crop box, and text parked beside a slide rather than on it |
 | `unrendered-text` | words stored in the file that OCR cannot find on the rendered page |
 | `unextractable-text` | words visible to OCR on the rendered page but absent from the extracted text |
 
@@ -496,7 +497,7 @@ unmasker tests/specimens/pdf/libreoffice-writer-image-over-text.pdf --json
 {
   "tool": "unmasker",
   "schema": "unmasker.scan/1",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "file": "tests/specimens/pdf/libreoffice-writer-image-over-text.pdf",
   "sha256": "d324105840b72c0d76c491150fe9220eabb4a87a3735afdb5de5af4c27fa0b66",
   "kind": "pdf",

@@ -9,6 +9,38 @@ release: `unmasker.scan/1` for one file, `unmasker.survey/1` for a folder. A
 consumer should read that rather than the release number, because the release
 moves whenever anything does and the schema moves only when the shape changes.
 
+## [0.6.0] - 2026-09-12
+
+### Added
+
+- **Text parked beside a slide.** The pasteboard around a slide is working
+  space, and a line dragged onto it is gone from the projector, the print and
+  the PDF while staying in the shape tree. Nobody has to have meant anything
+  by it, which is exactly why it is still there when the deck goes out. It is
+  `off-page-text`, the name a PDF already produces for text outside the page.
+
+  Only a box with *no overlap at all* is reported. A title box wider than its
+  slide is ordinary layout, and a slide gives no glyph positions, so an
+  overhang cannot be told from a sentence pushed half off the edge; reporting
+  it would fire on decks that hide nothing.
+
+### Fixed
+
+- **Text beside a slide counted as text an audience had seen.** It reached the
+  extraction as ordinary slide text, so a name parked off the slide made
+  `undisclosed-metadata` stay quiet about a metadata field naming the same
+  person. The third place this defect has lived, after a `.doc`'s hidden runs
+  and a `.docx`'s `w:vanish`.
+
+- **A deck's size was taken from the first page layout that stated one**,
+  which in a real file is the A4 sheet the *notes* are laid out on - 595 × 842
+  points rather than the slide's 794 × 446. Against that rectangle a box
+  plainly on the slide looked parked outside it. The size is now followed
+  through the chain the file states, from the page's master to its layout, and
+  a slide whose master cannot be resolved is given no size at all, which turns
+  the check off rather than running it against the wrong rectangle. Caught by
+  the overhanging box in the specimen, which exists for that purpose.
+
 ## [0.5.1] - 2026-09-12
 
 ### Changed

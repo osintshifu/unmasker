@@ -103,6 +103,25 @@ def _fills(root) -> dict[str, str]:
     return out
 
 
+def _placed(page, skip: set[int]):
+    """The figure nodes `_shapes` measures, in the same order.
+
+    Kept beside it rather than folded into it so the shape record stays free
+    of the parse tree, and so the two cannot drift: they walk the same
+    elements under the same conditions.
+    """
+    return [
+        node
+        for node in page.iter()
+        if node.tag in FIGURES
+        and id(node) not in skip
+        and all(
+            _points(node.get(f"{SVG}{name}")) is not None
+            for name in ("x", "y", "width", "height")
+        )
+    ]
+
+
 def _shapes(page, fills: dict[str, str], skip: set[int]) -> list[Shape]:
     """Every placed figure on the page, in the order the file paints it.
 
@@ -135,15 +154,33 @@ def _shapes(page, fills: dict[str, str], skip: set[int]) -> list[Shape]:
     return found
 
 
-def _page_size(root) -> tuple[float, float]:
-    """The slide, in points, out of the first page layout that states one."""
-    for props in root.iter(f"{STYLE}page-layout-properties"):
-        width, height = _points(props.get(f"{FO}page-width")), _points(
-            props.get(f"{FO}page-height")
-        )
+def _page_sizes(root) -> dict[str, tuple[float, float]]:
+    """Each master page's size in points, by the name a slide refers to it by.
+
+    Followed through the chain rather than taken from the first layout that
+    states a size: a deck holds several, and in the specimen the first is the
+    A4 sheet its *notes* are laid out on. A slide whose master cannot be
+    resolved gets no size at all, which turns off the check that needs one
+    rather than running it against the wrong rectangle.
+    """
+    layouts: dict[str, tuple[float, float]] = {}
+    for layout in root.iter(f"{STYLE}page-layout"):
+        name = layout.get(f"{STYLE}name")
+        props = layout.find(f"{STYLE}page-layout-properties")
+        if not name or props is None:
+            continue
+        width = _points(props.get(f"{FO}page-width"))
+        height = _points(props.get(f"{FO}page-height"))
         if width and height:
-            return width, height
-    return 0.0, 0.0
+            layouts[name] = (width, height)
+
+    out: dict[str, tuple[float, float]] = {}
+    for master in root.iter(f"{STYLE}master-page"):
+        name = master.get(f"{STYLE}name")
+        size = layouts.get(master.get(f"{STYLE}page-layout-name") or "")
+        if name and size:
+            out[name] = size
+    return out
 
 
 def _paragraphs(node, skip: set[int]) -> list[str]:
@@ -157,13 +194,23 @@ def _paragraphs(node, skip: set[int]) -> list[str]:
     return out
 
 
-def _read_page(page, hidden: bool, number: int, fills, size) -> Slide:
+def _read_page(page, hidden: bool, number: int, fills, sizes) -> Slide:
     # The notes subtree is taken out of the slide's own text first. Walking it
     # naively puts the speaker's private line into what the audience saw.
     notes_nodes = list(page.iter(f"{PRESENTATION}notes"))
     inside_notes = {id(n) for node in notes_nodes for n in node.iter()}
 
-    on_screen = _paragraphs(page, inside_notes)
+    size = sizes.get(page.get(f"{DRAW}master-page-name") or "", (0.0, 0.0))
+    shapes = _shapes(page, fills, inside_notes)
+
+    # A frame parked beside the slide is not something an audience saw, so its
+    # paragraphs are taken out of the page's text as the notes are.
+    offstage = set(inside_notes)
+    for shape, node in zip(shapes, _placed(page, inside_notes), strict=True):
+        if shape.beside(size[0], size[1]):
+            offstage.update(id(p) for p in node.iter(f"{TEXT}p"))
+
+    on_screen = _paragraphs(page, offstage)
     spoken: list[str] = []
     for node in notes_nodes:
         spoken.extend(_paragraphs(node, set()))
@@ -174,7 +221,7 @@ def _read_page(page, hidden: bool, number: int, fills, size) -> Slide:
         notes="\n".join(spoken),
         hidden=hidden,
         title=on_screen[0] if on_screen else page.get(f"{DRAW}name"),
-        shapes=tuple(_shapes(page, fills, inside_notes)),
+        shapes=tuple(shapes),
         width=size[0],
         height=size[1],
     )
@@ -191,20 +238,21 @@ def read_slides(archive: zipfile.ZipFile) -> SlideRecord:
 
     invisible = _hidden_styles(root)
     fills = _fills(root)
-    size = _page_size(root)
-    if not size[0]:
-        # The layout lives in styles.xml for a file written as a package,
-        # and in content.xml for one written flat.
-        try:
-            size = _page_size(ElementTree.fromstring(archive.read("styles.xml")))
-            fills.update(_fills(ElementTree.fromstring(archive.read("styles.xml"))))
-        except (KeyError, ElementTree.ParseError):
-            size = (0.0, 0.0)
+    sizes = _page_sizes(root)
+    # Masters and layouts live in styles.xml for a file written as a package
+    # and in content.xml for one written flat, so both are read.
+    try:
+        styles = ElementTree.fromstring(archive.read("styles.xml"))
+    except (KeyError, ElementTree.ParseError):
+        pass
+    else:
+        sizes.update(_page_sizes(styles))
+        fills.update(_fills(styles))
 
     slides: list[Slide] = []
     for body in root.iter(f"{OFFICE}presentation"):
         for page in body.iter(f"{DRAW}page"):
             hidden = (page.get(f"{DRAW}style-name") or "") in invisible
-            slides.append(_read_page(page, hidden, len(slides) + 1, fills, size))
+            slides.append(_read_page(page, hidden, len(slides) + 1, fills, sizes))
 
     return SlideRecord(slides=tuple(slides))

@@ -230,7 +230,8 @@ READERS = SOURCE / "readers"
 #: channels listed beside it.
 ROWS = {
     "a filled shape or an image drawn over text": ("drawn", "slides"),
-    "the rest of what the page paints": ("drawn",),
+    "text placed where the page or the slide does not show it": ("drawn", "slides"),
+    "faint text, and text the page does not paint at all": ("drawn",),
     "characters in the text": ("units",),
     "text the file marks as not to be drawn": ("hidden",),
     "hidden sheets, rows and columns": ("sheets",),

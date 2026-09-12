@@ -10,7 +10,12 @@ A **speaker note** was never on the screen at all. That is what notes are for,
 and it is why people write candid things in them, and why the candid thing goes
 out with the file.
 
-A **shape drawn over text** is the third, and it is the oldest failed
+**Text parked beside the slide** is the third. The pasteboard around a slide
+is working space, and a line dragged onto it is gone from the projector, the
+print and the PDF - and still in the shape tree. Nobody has to mean anything by
+it, which is why it is still there when the deck goes out.
+
+A **shape drawn over text** is the fourth, and it is the oldest failed
 redaction there is. It can be checked here without rendering anything, because
 unlike a word processor a slide says exactly where everything is: absolute
 coordinates against a known slide size, painted in document order. What it does
@@ -96,6 +101,23 @@ class Shape:
             self.top, other.top
         )
         return wide * tall if wide > 0 and tall > 0 else 0.0
+
+    def beside(self, width: float, height: float) -> bool:
+        """Whether the shape lies entirely off a slide of this size.
+
+        Entirely, and nothing less. A title box wider than its slide is
+        ordinary layout, and a slide gives no glyph positions - so an overhang
+        cannot be told from a sentence pushed half off the edge, and reporting
+        one would fire on decks that hide nothing.
+        """
+        if width <= 0 or height <= 0:
+            return False
+        return (
+            self.left >= width
+            or self.top >= height
+            or self.left + self.width <= 0
+            or self.top + self.height <= 0
+        )
 
     def contains(self, other: Shape) -> bool:
         return (
@@ -281,7 +303,44 @@ def covered_text(record: SlideRecord) -> list[Finding]:
     return findings
 
 
+def offstage_text(record: SlideRecord) -> list[Finding]:
+    """Text on the pasteboard: in the file, and on no slide anybody saw.
+
+    A hidden slide is left alone, as it is everywhere else here: it is already
+    a finding quoting everything on it, and saying a second time that part of
+    it is off to one side tells a reader nothing they have not just read.
+    """
+    findings: list[Finding] = []
+    for slide in record.slides:
+        if slide.hidden or not slide.width:
+            continue
+        for shape in slide.shapes:
+            if not shape.text.strip() or not shape.beside(slide.width, slide.height):
+                continue
+            findings.append(
+                Finding(
+                    detector="off-page-text",
+                    basis=Basis.DIRECT,
+                    summary=(
+                        f"{_count(shape.text)} sit beside slide {slide.number} "
+                        "rather than on it, in the working space around the "
+                        "slide; no showing, print or export of this deck puts "
+                        "them in front of anybody, and they are still in the file"
+                    ),
+                    human_sees="",
+                    machine_reads=shape.text,
+                    location=Location(page=slide.number),
+                )
+            )
+    return findings
+
+
 def detect(record: SlideRecord) -> list[Finding]:
     """Every presentation finding in one deck. Additive, and none outranks
     another."""
-    return hidden_slides(record) + speaker_notes(record) + covered_text(record)
+    return (
+        hidden_slides(record)
+        + speaker_notes(record)
+        + covered_text(record)
+        + offstage_text(record)
+    )

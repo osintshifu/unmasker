@@ -60,10 +60,17 @@ def _relationships(archive: zipfile.ZipFile, part: str) -> dict[str, str]:
     return out
 
 
-def _text_of(node) -> str:
-    """Every run of text under a node, paragraph by paragraph."""
+def _text_of(node, skip: set[int] | None = None) -> str:
+    """Every run of text under a node, paragraph by paragraph.
+
+    `skip` holds the paragraphs of shapes that are not on the slide at all.
+    Without it a line parked on the pasteboard reaches the extraction as
+    ordinary slide text, and then counts as something an audience saw.
+    """
     out = []
     for paragraph in node.iter(f"{DRAWING}p"):
+        if skip and id(paragraph) in skip:
+            continue
         line = "".join(t.text or "" for t in paragraph.iter(f"{DRAWING}t")).strip()
         if line:
             out.append(line)
@@ -76,7 +83,7 @@ def _text_of(node) -> str:
 EMU = 12700
 
 
-def _shapes(slide) -> list[Shape]:
+def _shapes(slide, width: float, height: float) -> tuple[list[Shape], set[int]]:
     """Every shape on the slide, in the order the file paints them.
 
     Document order in the shape tree *is* painting order, so the index is the
@@ -88,6 +95,7 @@ def _shapes(slide) -> list[Shape]:
     slide and be reported as covered by all of them.
     """
     found: list[Shape] = []
+    offstage: set[int] = set()
     for index, shape in enumerate(slide.iter(f"{MAIN}sp")):
         properties = shape.find(f"{MAIN}spPr")
         if properties is None:
@@ -124,13 +132,14 @@ def _shapes(slide) -> list[Shape]:
         except ValueError:
             continue
 
-        found.append(
-            Shape(
-                left=box[0], top=box[1], width=box[2], height=box[3],
-                order=index, text=_text_of(shape), fill=fill,
-            )
+        placed = Shape(
+            left=box[0], top=box[1], width=box[2], height=box[3],
+            order=index, text=_text_of(shape), fill=fill,
         )
-    return found
+        found.append(placed)
+        if placed.beside(width, height):
+            offstage.update(id(p) for p in shape.iter(f"{DRAWING}p"))
+    return found, offstage
 
 
 def _notes_text(xml: bytes) -> str:
@@ -206,7 +215,8 @@ def read_slides(archive: zipfile.ZipFile) -> SlideRecord:
                 notes = _notes_text(archive.read(target))
                 break
 
-        text = _text_of(slide)
+        shapes, offstage = _shapes(slide, width, height)
+        text = _text_of(slide, offstage)
         slides.append(
             Slide(
                 number=number,
@@ -214,7 +224,7 @@ def read_slides(archive: zipfile.ZipFile) -> SlideRecord:
                 notes=notes,
                 hidden=hidden,
                 title=text.splitlines()[0] if text else None,
-                shapes=tuple(_shapes(slide)),
+                shapes=tuple(shapes),
                 width=width,
                 height=height,
             )
