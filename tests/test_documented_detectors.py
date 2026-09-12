@@ -229,18 +229,28 @@ def test_every_specimen_says_where_it_came_from():
 
 READERS = SOURCE / "readers"
 
-#: Which channel each row of the README table is fed by.
+#: Which channels each row of the README table is fed by. More than one for a
+#: row where the same question is answered from different evidence: a bar over
+#: text is computed from a PDF's painting operators and from a slide's shape
+#: tree, which are two channels and one sentence to a reader.
+#:
+#: This is the declared half, and it is where the check can be wrong. It was,
+#: within an hour of being written: `covered-text` gained the slide reader, the
+#: row went on saying PDF, and nothing failed, because the row was bound to one
+#: channel and the work had added a second. A row is only as honest as the
+#: channels listed beside it.
 ROWS = {
-    "what the page paints": "drawn",
-    "characters in the text": "units",
-    "text the file marks as not to be drawn": "hidden",
-    "hidden sheets, rows and columns": "sheets",
-    "hidden slides and speaker notes": "slides",
-    "the embedded thumbnail": "image",
-    "tracked changes and comments": "revisions",
-    "whole files carried inside": "attachments",
-    "earlier revisions": "earlier",
-    "metadata against": "metadata",
+    "a filled shape or an image drawn over text": ("drawn", "slides"),
+    "the rest of what the page paints": ("drawn",),
+    "characters in the text": ("units",),
+    "text the file marks as not to be drawn": ("hidden",),
+    "hidden sheets, rows and columns": ("sheets",),
+    "hidden slides and speaker notes": ("slides",),
+    "the embedded thumbnail": ("image",),
+    "tracked changes and comments": ("revisions",),
+    "whole files carried inside": ("attachments",),
+    "earlier revisions": ("earlier",),
+    "metadata against": ("metadata",),
 }
 
 #: What a reader module is called on the front page.
@@ -298,13 +308,14 @@ def test_the_readme_says_which_formats_reach_which_check():
     rows = {cells[0]: cells[1] for cells in _rows(("what is checked", "runs on"))}
     assert len(rows) == len(ROWS), sorted(rows)
 
-    for lead, channel in ROWS.items():
+    for lead, channels in ROWS.items():
         stated = next((v for k, v in rows.items() if k.startswith(lead)), None)
         assert stated is not None, f"the README no longer has a row for {lead!r}"
 
         reached: set[str] = set()
-        for module in filled.get(channel, ()):
-            reached.update(DEPTH.get((module, channel), FORMATS[module]))
+        for channel in channels:
+            for module in filled.get(channel, ()):
+                reached.update(DEPTH.get((module, channel), FORMATS[module]))
 
         named = {name.strip() for name in stated.split(",")}
         assert named == reached, (lead, sorted(named), sorted(reached))

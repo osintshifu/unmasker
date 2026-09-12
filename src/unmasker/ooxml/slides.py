@@ -31,7 +31,7 @@ import posixpath
 import zipfile
 from xml.etree import ElementTree
 
-from ..slides import Slide, SlideRecord
+from ..slides import Shape, Slide, SlideRecord
 
 MAIN = "{http://schemas.openxmlformats.org/presentationml/2006/main}"
 DRAWING = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
@@ -70,6 +70,69 @@ def _text_of(node) -> str:
     return "\n".join(out)
 
 
+#: OOXML measures in English Metric Units. 914400 to the inch, 72 points to
+#: the inch, so this many to the point - exactly, which is the reason the unit
+#: exists.
+EMU = 12700
+
+
+def _shapes(slide) -> list[Shape]:
+    """Every shape on the slide, in the order the file paints them.
+
+    Document order in the shape tree *is* painting order, so the index is the
+    whole of the z-order and nothing has to be sorted.
+
+    A shape with no `a:xfrm` inherits its position from a layout placeholder,
+    which is a second part and a second set of rules; those are skipped rather
+    than placed at the origin, where they would sit under every bar on the
+    slide and be reported as covered by all of them.
+    """
+    found: list[Shape] = []
+    for index, shape in enumerate(slide.iter(f"{MAIN}sp")):
+        properties = shape.find(f"{MAIN}spPr")
+        if properties is None:
+            continue
+        offset = properties.find(f"{DRAWING}xfrm/{DRAWING}off")
+        extent = properties.find(f"{DRAWING}xfrm/{DRAWING}ext")
+        if offset is None or extent is None:
+            continue
+
+        # Only the shape's own fill. A `solidFill` anywhere under `sp` would
+        # also match the colour of the text inside it, which is a different
+        # thing entirely and would make every text frame look like a bar.
+        fill = ""
+        solid = properties.find(f"{DRAWING}solidFill")
+        if solid is not None:
+            colour = next(iter(solid), None)
+            if colour is not None:
+                value = colour.get("val") or ""
+                fill = (
+                    f"#{value}"
+                    if colour.tag == f"{DRAWING}srgbClr"
+                    else f"with the theme colour {value}"
+                    if value
+                    else "solid"
+                )
+
+        try:
+            box = [
+                int(offset.get("x") or 0) / EMU,
+                int(offset.get("y") or 0) / EMU,
+                int(extent.get("cx") or 0) / EMU,
+                int(extent.get("cy") or 0) / EMU,
+            ]
+        except ValueError:
+            continue
+
+        found.append(
+            Shape(
+                left=box[0], top=box[1], width=box[2], height=box[3],
+                order=index, text=_text_of(shape), fill=fill,
+            )
+        )
+    return found
+
+
 def _notes_text(xml: bytes) -> str:
     """The speaker's own words, without the slide repeated back at them.
 
@@ -104,6 +167,13 @@ def read_slides(archive: zipfile.ZipFile) -> SlideRecord:
         root = ElementTree.fromstring(archive.read(PRESENTATION))
     except ElementTree.ParseError as exc:
         return SlideRecord(remarks=(f"ppt/presentation.xml is not well-formed XML: {exc}",))
+
+    size = root.find(f"{MAIN}sldSz")
+    try:
+        width = int(size.get("cx") or 0) / EMU if size is not None else 0.0
+        height = int(size.get("cy") or 0) / EMU if size is not None else 0.0
+    except ValueError:
+        width = height = 0.0
 
     targets = _relationships(archive, PRESENTATION)
 
@@ -144,6 +214,9 @@ def read_slides(archive: zipfile.ZipFile) -> SlideRecord:
                 notes=notes,
                 hidden=hidden,
                 title=text.splitlines()[0] if text else None,
+                shapes=tuple(_shapes(slide)),
+                width=width,
+                height=height,
             )
         )
 

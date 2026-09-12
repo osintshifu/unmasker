@@ -56,6 +56,8 @@ which RFC 2606 reserves for the purpose.
 | [`pdf/pypdf-incremental-page-removed.pdf`](pdf/pypdf-incremental-page-removed.md) | LibreOffice 24.2, pypdf 6.16 | a one-page award notice | an earlier revision holding the annex that was deleted, reserve price and all |
 | [`doc/libreoffice-writer-word97.doc`](doc/libreoffice-writer-word97.md) | LibreOffice 24.2 Writer, exported to Word 97 | an award notice naming nobody | two names, a title marked *do not circulate* and a company, in the compound file's property streams |
 | [`doc/libreoffice-writer-word97-stories.doc`](doc/libreoffice-writer-word97-stories.md) | LibreOffice 24.2 Writer, exported to Word 97 | an award notice with a table, a header and a footnote | 237 of its 504 characters outside the main story — a comment, a header marked *internal circulation only*, a text box — and a hyperlink whose URL is on no page |
+| [`pptx/libreoffice-impress-covered-text.pptx`](pptx/libreoffice-impress-covered-text.md) | LibreOffice 24.2 Impress | two black bars, a line on a black band, one line clear | a name wholly behind a bar, a price half behind one — and the banner that must not be reported, which only painting order tells apart |
+| [`odp/libreoffice-impress-covered-text.odp`](odp/libreoffice-impress-covered-text.md) | LibreOffice 24.2 Impress | the same slide | the same four cases, with the fill a step away in a style and the size a measurement rather than a count |
 | [`docx/libreoffice-writer-hidden-run.docx`](docx/libreoffice-writer-hidden-run.md) | LibreOffice 24.2 Writer | two lines, one with a gap in it | a run carrying `w:vanish`, which Word does not draw |
 | [`odt/libreoffice-writer-hidden-run.odt`](odt/libreoffice-writer-hidden-run.md) | LibreOffice 24.2 Writer | the same two lines | the same sentence, hidden by a *style* rather than by the run — the one difference between the containers |
 | [`doc/libreoffice-writer-word97-marks.doc`](doc/libreoffice-writer-word97-marks.md) | LibreOffice 24.2 Writer, exported to Word 97 | three short paragraphs | a tracked deletion with its author and date, and a run carrying Word's hidden attribute, both in the piece table beside the printed text |
@@ -197,6 +199,15 @@ Named here so their absence is not mistaken for coverage:
 - **Word's character formatting other than the hidden attribute**, and the
   objects a .doc carries in its `ObjectPool` storage. The report names the
   storage rather than opening it.
+- **A shape drawn over text in a word processor.** A slide states absolute
+  coordinates against a known slide size, so the check is computed there from
+  the file. A `.docx` or `.odt` lays its text out as it flows and never says
+  where the ink lands, so the same bar cannot be found without rendering the
+  document - which is a different piece of work, and an optional dependency.
+- **Which characters are behind a bar on a slide.** A PDF stores glyph
+  positions and the detector names the covered characters exactly. A slide
+  stores the text box, so a partly covered box is reported as circumstantial
+  and says why rather than implying a precision the format cannot give.
 - **White text on a white background**, in any word processor. It is the same
   trick as a hidden run and it is not read, because unlike `w:vanish` it is
   not a property that means *do not draw*: it means *draw in this colour*, and

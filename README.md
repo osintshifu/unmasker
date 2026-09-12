@@ -163,7 +163,7 @@ Exit status is part of the interface:
 | Unicode | zero-width characters, bidi controls, tag characters, mixed scripts |
 | Word / ODT | tracked deletions, comments, revision history, metadata leaks |
 | Excel / Calc | hidden sheets, rows and columns, filtered rows, tracked cell changes |
-| PowerPoint / Impress | hidden slides and speaker notes |
+| PowerPoint / Impress | hidden slides, speaker notes, and a shape drawn over text on a slide |
 | JPEG | stale EXIF thumbnails that can preserve content removed by cropping, and the XMP edit history an editor left behind |
 | Metadata | undisclosed values, local filesystem paths and conflicting metadata copies |
 | Legacy Word | a `.doc`'s text, story by story — body, footnotes, headers, footers, text boxes — with its comments, tracked changes and hidden runs |
@@ -184,7 +184,8 @@ finding nothing.
 
 | What is checked | Runs on |
 | :--- | :--- |
-| what the page paints: a bar over text, an image over text, faint text, text off the page | PDF |
+| a filled shape or an image drawn over text | PDF, PPTX, ODP |
+| the rest of what the page paints: faint text, text the page does not paint, text off the page | PDF |
 | characters in the text: zero-width, direction controls, tag characters, mixed scripts | PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, DOC, text |
 | text the file marks as not to be drawn | DOCX, ODT, DOC |
 | hidden sheets, rows and columns, and filtered rows | XLSX, ODS |
@@ -375,7 +376,7 @@ The detector slug is stable output intended for reports and automation.
 
 | Detector | What it reports |
 | :--- | :--- |
-| `covered-text` | text underneath a filled shape, measured per character |
+| `covered-text` | text underneath a filled shape — per character in a PDF, per text box on a slide |
 | `text-under-image` | text underneath an image, kept distinct from a filled-shape redaction |
 | `invisible-text` | text the file tells the application not to draw — a PDF render mode that paints nothing, or a Word run marked hidden |
 | `low-contrast-text` | text too close in colour to the background behind it |
@@ -493,7 +494,7 @@ unmasker tests/specimens/pdf/libreoffice-writer-image-over-text.pdf --json
 {
   "tool": "unmasker",
   "schema": "unmasker.scan/1",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "file": "tests/specimens/pdf/libreoffice-writer-image-over-text.pdf",
   "sha256": "d324105840b72c0d76c491150fe9220eabb4a87a3735afdb5de5af4c27fa0b66",
   "kind": "pdf",
@@ -563,7 +564,7 @@ human or a downstream system can decide what they mean.
 
 Every detector fires on a committed specimen written by a real producer,
 including LibreOffice, headless Chrome, Ghostscript, Tesseract, exiftool,
-ImageMagick, poppler and pypdf. There are 44 of them and each has a provenance note describing how
+ImageMagick, poppler and pypdf. There are 46 of them and each has a provenance note describing how
 it was produced, what a person sees and what is actually stored inside.
 
 This matters because real producers routinely disagree with assumptions made

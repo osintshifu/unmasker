@@ -9,6 +9,50 @@ release: `unmasker.scan/1` for one file, `unmasker.survey/1` for a folder. A
 consumer should read that rather than the release number, because the release
 moves whenever anything does and the schema moves only when the shape changes.
 
+## [0.4.0] - 2026-09-12
+
+A minor version because the finding this tool is named for works on a family
+of formats it did not, and the runtime dependency count is unchanged at one.
+
+### Added
+
+- **`covered-text` on slides.** A shape drawn over text was found in a PDF and
+  nowhere else, which left the oldest failed redaction there is unreported in
+  the format people build decks in. It is computed from the file rather than
+  rendered: a slide states absolute coordinates against a known slide size and
+  paints its shapes in document order, so which one is on top of which is not
+  a guess.
+
+  Painting order is what separates a redaction from an ordinary slide. Text on
+  a coloured band overlaps its band exactly as a bar overlaps the name under
+  it, and only which was drawn first tells them apart. The corpus carries that
+  case beside the two that should fire.
+
+  The basis follows the geometry and nothing else. Where the shape's rectangle
+  contains the text box, every character is behind it and the evidence is
+  direct. Where it takes part of the box, a slide does not say which
+  characters those are - it stores the box, not the position of each letter -
+  so the finding is circumstantial and says why, rather than implying a
+  precision the format cannot give. A PDF answers this exactly; that is the
+  one thing the slide formats give up.
+
+### Notes
+
+The coverage table added in 0.3.2 did **not** catch the row it should have. It
+binds a row to the channel that feeds it, and this work gave an existing row a
+second channel: the bar is computed from a PDF's painting operators and from a
+slide's shape tree. The row went on saying PDF and nothing failed. Rows now
+name every channel they are fed by, and the limit is written down beside them
+- a row is only as honest as the channels listed next to it.
+
+Two things came out of real producer output rather than a specification. The
+fill has to be read from `<p:spPr>` and not from anywhere under `<p:sp>`,
+because a `solidFill` deeper in the shape is the colour of the *text* in it and
+would make every text frame look like a bar. And a shape is background-sized
+against the *slide*, not against the largest shape on it - measuring it the
+second way makes every bar the background of its own comparison, which is what
+the first draft did and what the specimen caught.
+
 ## [0.3.2] - 2026-09-12
 
 ### Fixed
