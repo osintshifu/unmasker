@@ -15,6 +15,13 @@ visible prose, which is exactly backwards: a reader of the page sees neither.
 They are read separately, by `unmasker.odf.revisions`, which keeps the author
 and the date attached to them.
 
+A span whose style sets `text:display="none"` is taken out for the same
+reason. LibreOffice does not draw it and no print of the document shows it, so
+folding it in would have the report say it had searched the text and found
+nothing hidden - about a file holding a sentence nobody can see. Unlike Word's
+`w:vanish`, which sits on the run, this is a property of a *style*, so the
+styles have to be read before the body means anything.
+
 No new dependency: an .odt is a zip of XML and both are in the standard library.
 """
 
@@ -24,6 +31,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
+from ..hidden import HiddenRun
 from ..metadata import read_odf as read_odf_metadata
 from ..metadata.detectors import describe
 from ..odf.revisions import read_revisions
@@ -37,12 +45,49 @@ NOT_ON_THE_PAGE = (f"{TEXT}tracked-changes", f"{OFFICE}annotation")
 
 PARAGRAPHS = (f"{TEXT}p", f"{TEXT}h")
 
+STYLE = "{urn:oasis:names:tc:opendocument:xmlns:style:1.0}"
 
-def _paragraph_text(node) -> str:
+
+def _undrawn_styles(root) -> set[str]:
+    """The style names that say not to draw what carries them.
+
+    Resolved through `style:parent-style-name` as well as declared directly,
+    because a style that inherits the property hides just as thoroughly as one
+    that states it.
+    """
+    declared: dict[str, str | None] = {}
+    undrawn: set[str] = set()
+    for style in root.iter(f"{STYLE}style"):
+        name = style.get(f"{STYLE}name")
+        if not name:
+            continue
+        declared[name] = style.get(f"{STYLE}parent-style-name")
+        properties = style.find(f"{STYLE}text-properties")
+        if properties is not None and properties.get(f"{TEXT}display") == "none":
+            undrawn.add(name)
+
+    for name in declared:
+        seen: set[str] = set()
+        at: str | None = name
+        while at is not None and at in declared and at not in seen:
+            seen.add(at)
+            if at in undrawn:
+                undrawn.add(name)
+                break
+            at = declared[at]
+    return undrawn
+
+
+def _paragraph_text(node, undrawn: set[str], unseen: list[str]) -> str:
     out: list[str] = []
 
     def walk(element) -> None:
         for child in element:
+            if child.tag == f"{TEXT}span" and child.get(f"{TEXT}style-name") in undrawn:
+                unseen.append("".join(child.itertext()))
+                if child.tail:
+                    out.append(child.tail)
+                continue
             if child.tag in NOT_ON_THE_PAGE:
                 # Skip the subtree but keep what follows it on the line.
                 if child.tail:
@@ -66,8 +111,10 @@ def _paragraph_text(node) -> str:
     return "".join(out)
 
 
-def _body_text(root) -> str:
+def _body_text(root) -> tuple[str, list[str]]:
     """One line per paragraph, skipping paragraphs inside what is not on the page."""
+    undrawn = _undrawn_styles(root)
+    unseen: list[str] = []
     skipped: set[int] = set()
     for hidden in NOT_ON_THE_PAGE:
         for node in root.iter(hidden):
@@ -78,8 +125,8 @@ def _body_text(root) -> str:
     for node in root.iter():
         if node.tag not in PARAGRAPHS or id(node) in skipped:
             continue
-        lines.append(_paragraph_text(node))
-    return "\n".join(lines)
+        lines.append(_paragraph_text(node, undrawn, unseen))
+    return "\n".join(lines), unseen
 
 
 def read_odf(path: Path) -> Extraction:
@@ -95,6 +142,7 @@ def read_odf(path: Path) -> Extraction:
 
         units: list[TextUnit] = []
         remarks: list[str] = []
+        hidden: list[HiddenRun] = []
         for part in ("content.xml", "styles.xml"):
             if part not in names:
                 continue
@@ -103,9 +151,14 @@ def read_odf(path: Path) -> Extraction:
             except ElementTree.ParseError as exc:
                 remarks.append(f"{part} is not well-formed XML and was skipped: {exc}")
                 continue
-            text = _body_text(root)
+            text, unseen = _body_text(root)
             if text.strip():
                 units.append(TextUnit(text=text))
+            hidden.extend(
+                HiddenRun(text=run, part=part, mechanism='text:display="none"')
+                for run in unseen
+                if run.strip()
+            )
 
         record = read_revisions(archive)
         remarks.extend(record.remarks)
@@ -122,5 +175,6 @@ def read_odf(path: Path) -> Extraction:
         units=tuple(units),
         remarks=tuple(remarks),
         revisions=record,
+        hidden=tuple(hidden),
         metadata=metadata,
     )

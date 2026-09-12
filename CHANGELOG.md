@@ -9,6 +9,65 @@ release: `unmasker.scan/1` for one file, `unmasker.survey/1` for a folder. A
 consumer should read that rather than the release number, because the release
 moves whenever anything does and the schema moves only when the shape changes.
 
+## [0.3.2] - 2026-09-12
+
+### Fixed
+
+- **Hidden text in a .docx and an .odt was reported as text on the page.** A
+  run carrying `w:vanish`, or a span whose style sets `text:display="none"`,
+  was folded into the body like any other, so the report said it had searched
+  the text and **found nothing hidden** about a file holding a sentence no
+  print of it would show.
+
+  The quieter cost was worse. The body text is what metadata values are
+  compared against, so a name in a hidden run counted as shown and
+  `undisclosed-metadata` stayed silent about the field naming it.
+
+  Both now produce `invisible-text`, the name a PDF render mode that paints
+  neither fill nor stroke already produces, and a .doc's hidden attribute
+  since 0.3.0. The statement is the same in all four containers, so it keeps
+  one name.
+
+### Changed
+
+- The three containers that can say *do not draw this* now report it through
+  one channel on the extraction rather than one each. `unmasker.hidden`
+  replaces the Word-only detector added in 0.3.0.
+
+### Notes
+
+White text on a white background is deliberately not read, and the corpus
+notes say why: unlike `w:vanish` it does not mean *do not draw*, it means
+*draw in this colour*, and whether that hides anything depends on every
+background behind it. `low-contrast-text` answers that for a PDF by measuring
+what was painted.
+
+### Added
+
+- **The README says which formats reach which check**, and a test derives that
+  from the readers so it cannot drift. A check that did not run cannot report
+  anything, and a format missing from a row means the question was never asked
+  about that file - which is not the answer "asked, and nothing found".
+
+  The claim had never been stated. While it was not, `covered-text` - the
+  finding on the front page, the one the wordmark is about - worked on PDF and
+  nothing else, and no page said so. A black rectangle drawn over a paragraph
+  in a .docx produced "nothing hidden found by the detectors that exist".
+
+  The table is derived rather than declared twice: a reader reaches a detector
+  only by filling the channel that detector is gated on. Two places where the
+  channel does not settle the answer are written down instead of parsed - a
+  .doc, .xls and .ppt share a reader and are read to different depths, and
+  attachments are collected for every zip after the reader has returned.
+
+### Notes
+
+`Limits` now separates two reasons the page checks are PDF-only. A word
+processor lays its text out as it flows, so the file does not say where the
+ink lands and nothing short of rendering can tell. A slide does say - every
+shape carries absolute coordinates against a known slide size - so the same
+check is possible there and is only unwritten.
+
 ## [0.3.1] - 2026-09-05
 
 ### Fixed

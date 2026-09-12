@@ -134,9 +134,9 @@ unmasker ~/cases/kowalski --html > report.html
 
 | Option | Purpose |
 | :--- | :--- |
-| `--json` | emit one JSON object on stdout for a pipeline to sort or filter |
-| `--html` | emit one self-contained HTML report on stdout |
-| `--md` | emit Markdown on stdout for a wiki, ticket or pull request |
+| `--json` | one JSON object, for a script to sort or filter |
+| `--html` | one self-contained HTML report, ready to send to someone |
+| `--md` | Markdown for a wiki, a ticket or a pull request |
 | `--ocr` | render a page and read it back to catch mismatches without knowing the hiding technique |
 | `--width N` | wrap terminal output at N columns |
 | `--version` | print the version and exit |
@@ -174,6 +174,29 @@ Exit status is part of the interface:
 Supported inputs are PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, JPEG, UTF-8 text and legacy `.doc`, plus `.xls` and `.ppt` for their metadata.
 Content is identified from the file itself rather than trusted solely from the
 extension.
+
+### What runs on what
+
+Not every check runs on every format, and a check that did not run cannot
+report anything. **If a format is missing from a row, that question was never
+asked about your file** — which is not the same answer as asking it and
+finding nothing.
+
+| What is checked | Runs on |
+| :--- | :--- |
+| what the page paints: a bar over text, an image over text, faint text, text off the page | PDF |
+| characters in the text: zero-width, direction controls, tag characters, mixed scripts | PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, DOC, text |
+| text the file marks as not to be drawn | DOCX, ODT, DOC |
+| hidden sheets, rows and columns, and filtered rows | XLSX, ODS |
+| hidden slides and speaker notes | PPTX, ODP |
+| the embedded thumbnail against the image it sits in | JPEG |
+| tracked changes and comments | DOCX, ODT, DOC, XLSX, ODS |
+| whole files carried inside the document | PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP |
+| earlier revisions the file still holds | PDF |
+| metadata against the document's own text | PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, DOC, XLS, PPT, JPEG |
+
+This table is checked against the readers, so it cannot drift away from what
+the code can actually see.
 
 ## Practical examples
 
@@ -289,38 +312,41 @@ unmasker tests/specimens/docx
 ```
 
 ```text
-  unmasker  tests/specimens/docx                              4 of 8 files
+  unmasker  tests/specimens/docx                             5 of 10 files
   ────────────────────────────────────────────────────────────────────────
-    read      8 files, 17 findings
+    read      10 files, 19 findings
     not read  0 files
 
-  what was found                                                  11 kinds
+  what was found                                                  12 kinds
   ────────────────────────────────────────────────────────────────────────
+    undisclosed-metadata  2 files
     attached-file         1 file
     hidden-sheet          1 file
     zero-width            1 file
     bidi-control          1 file
     tag-characters        1 file
     mixed-script          1 file
-    undisclosed-metadata  1 file
+    invisible-text        1 file
     metadata-path         1 file
     deleted-text          1 file
     comment               1 file
     revision-history      1 file
 
-  files that hide something                                        4 files
+  files that hide something                                        5 files
   ────────────────────────────────────────────────────────────────────────
     libreoffice-writer-embedded-sheet.docx     attached-file, hidden-sheet
     libreoffice-writer-hidden-characters.docx  zero-width, bidi-control,
                                                tag-characters,
                                                mixed-script
+    libreoffice-writer-hidden-run.docx         invisible-text,
+                                               undisclosed-metadata
     libreoffice-writer-metadata-leak.docx      undisclosed-metadata,
                                                metadata-path
     libreoffice-writer-tracked-changes.docx    deleted-text, comment,
                                                revision-history
 
   ────────────────────────────────────────────────────────────────────────
-  searched 8 files. unmasker <file> for the detail, --json for all of it.
+  searched 10 files. unmasker <file> for the detail, --json for all of it.
 ```
 
 A directory scan reports what was read, what could not be read, which detector
@@ -467,7 +493,7 @@ unmasker tests/specimens/pdf/libreoffice-writer-image-over-text.pdf --json
 {
   "tool": "unmasker",
   "schema": "unmasker.scan/1",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "file": "tests/specimens/pdf/libreoffice-writer-image-over-text.pdf",
   "sha256": "d324105840b72c0d76c491150fe9220eabb4a87a3735afdb5de5af4c27fa0b66",
   "kind": "pdf",
@@ -537,7 +563,7 @@ human or a downstream system can decide what they mean.
 
 Every detector fires on a committed specimen written by a real producer,
 including LibreOffice, headless Chrome, Ghostscript, Tesseract, exiftool,
-ImageMagick, poppler and pypdf. There are 42 of them and each has a provenance note describing how
+ImageMagick, poppler and pypdf. There are 44 of them and each has a provenance note describing how
 it was produced, what a person sees and what is actually stored inside.
 
 This matters because real producers routinely disagree with assumptions made
@@ -549,15 +575,14 @@ Independent tooling such as Poppler is used where specimens need measurements,
 and detector behavior is mutation-tested so a broken rule has to break a test.
 The README is checked against the repository so the front page cannot silently
 drift away from the code: the detector list, the detector badge, the specimen
-count, the test count, and every example on this page - each command is run
+count, and every example on this page - each command is run
 and its output compared to the block printed beneath it.
-
-802 tests.
 
 ## Limits
 
 - No verdicts about whether a document was manipulated or malicious.
 - No writing to the input file and no network access.
+- The checks on what a page paints run on PDF only, and the reasons differ by format. A word processor lays its text out as it flows, so a `.docx` or `.odt` does not say where the ink lands and nothing short of rendering it can tell; a bar drawn over a paragraph is not found. A slide does say — every shape carries absolute coordinates against a known slide size — so the same check is possible on `.pptx` and `.odp` and is simply not written yet.
 - A `.doc` is read for its text as well as its metadata: the piece table, every story, and the property tables that say which characters are deleted or hidden. Its embedded objects are not opened, and character formatting other than the hidden attribute is not read.
 - `.xls` and `.ppt` are read for what they say about themselves, not for their text. The compound-file container and both property streams are read; the BIFF and PowerPoint record streams inside them are not.
 - Signature coverage is not checked. A signed PDF's `/ByteRange` says which bytes it covers, and no signed specimen could be produced to test a detector against.

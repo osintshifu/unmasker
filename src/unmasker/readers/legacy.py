@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ..hidden import HiddenRun
 from ..metadata import Field, Metadata
 from ..metadata.detectors import describe
 from ..ole2 import CompoundFile, NotACompoundFile
@@ -163,6 +164,7 @@ def read_legacy(path: Path) -> Extraction:
         )
 
     units: tuple[TextUnit, ...] = ()
+    unseen: tuple[HiddenRun, ...] = ()
     record: RevisionRecord | None = None
     document = None
     unread = True
@@ -180,6 +182,14 @@ def read_legacy(path: Path) -> Extraction:
             unread = document.encrypted or document.properties_unread
             if not unread:
                 units = tuple(TextUnit(text=story.text) for story in document.stories)
+                unseen = tuple(
+                    HiddenRun(
+                        text=story.text,
+                        part=story.name,
+                        mechanism="Word's hidden attribute",
+                    )
+                    for story in document.hidden
+                )
                 remarks.append(_covered(document))
                 remarks.extend(_fields(document))
             record = RevisionRecord(
@@ -227,7 +237,7 @@ def read_legacy(path: Path) -> Extraction:
         source=path,
         metadata=metadata,
         revisions=record,
-        word=document,
+        hidden=unseen,
         text_unread=unread,
     )
 

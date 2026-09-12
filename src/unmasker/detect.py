@@ -14,6 +14,7 @@ import dataclasses
 
 from .attachments import detect_attachments
 from .findings import Finding
+from .hidden import detect as detect_hidden
 from .metadata.detectors import detect as detect_metadata
 from .pdf.detectors import detect as detect_drawn
 from .pdf.detectors import unextractable_text, unrendered_text
@@ -24,7 +25,6 @@ from .sheets import detect as detect_sheets
 from .slides import detect as detect_slides
 from .text.invisible import scan_text
 from .thumbnails import detect as detect_thumbnails
-from .word.detectors import detect as detect_word
 
 
 def collect(extraction, ocr: bool = False) -> list[Finding]:
@@ -115,11 +115,11 @@ def _collect(extraction, ocr: bool = False, *, descend: bool = True) -> list[Fin
     if extraction.slides is not None:
         found.extend(detect_slides(extraction.slides))
 
-    # And in a Word 97 document: a run carrying the hidden attribute, which
-    # the application does not draw. Its tracked changes arrive through
-    # `revisions` above, beside every other deletion this tool reports.
-    if extraction.word is not None:
-        found.extend(detect_word(extraction.word))
+    # Text the document marks as not to be drawn: `w:vanish` in a .docx,
+    # `text:display="none"` in an .odt, a character property in a .doc. One
+    # statement, so one detector, whichever container it arrives in.
+    if extraction.hidden:
+        found.extend(detect_hidden(extraction.hidden))
 
     # A photograph, against the smaller photograph inside it. The shape
     # comparison is free; reading the preview back costs an OCR pass and waits

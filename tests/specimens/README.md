@@ -56,6 +56,8 @@ which RFC 2606 reserves for the purpose.
 | [`pdf/pypdf-incremental-page-removed.pdf`](pdf/pypdf-incremental-page-removed.md) | LibreOffice 24.2, pypdf 6.16 | a one-page award notice | an earlier revision holding the annex that was deleted, reserve price and all |
 | [`doc/libreoffice-writer-word97.doc`](doc/libreoffice-writer-word97.md) | LibreOffice 24.2 Writer, exported to Word 97 | an award notice naming nobody | two names, a title marked *do not circulate* and a company, in the compound file's property streams |
 | [`doc/libreoffice-writer-word97-stories.doc`](doc/libreoffice-writer-word97-stories.md) | LibreOffice 24.2 Writer, exported to Word 97 | an award notice with a table, a header and a footnote | 237 of its 504 characters outside the main story — a comment, a header marked *internal circulation only*, a text box — and a hyperlink whose URL is on no page |
+| [`docx/libreoffice-writer-hidden-run.docx`](docx/libreoffice-writer-hidden-run.md) | LibreOffice 24.2 Writer | two lines, one with a gap in it | a run carrying `w:vanish`, which Word does not draw |
+| [`odt/libreoffice-writer-hidden-run.odt`](odt/libreoffice-writer-hidden-run.md) | LibreOffice 24.2 Writer | the same two lines | the same sentence, hidden by a *style* rather than by the run — the one difference between the containers |
 | [`doc/libreoffice-writer-word97-marks.doc`](doc/libreoffice-writer-word97-marks.md) | LibreOffice 24.2 Writer, exported to Word 97 | three short paragraphs | a tracked deletion with its author and date, and a run carrying Word's hidden attribute, both in the piece table beside the printed text |
 | [`xls/libreoffice-calc-excel97.xls`](xls/libreoffice-calc-excel97.md) | LibreOffice 24.2 Calc, exported to Excel 97 | a two-column sheet of scores | nothing this tool reads — it is here to hold still the claim that a workbook's text *was not read* |
 
@@ -195,6 +197,15 @@ Named here so their absence is not mistaken for coverage:
 - **Word's character formatting other than the hidden attribute**, and the
   objects a .doc carries in its `ObjectPool` storage. The report names the
   storage rather than opening it.
+- **White text on a white background**, in any word processor. It is the same
+  trick as a hidden run and it is not read, because unlike `w:vanish` it is
+  not a property that means *do not draw*: it means *draw in this colour*, and
+  whether that hides anything depends on the paragraph, table-cell, section
+  and page backgrounds behind it. `low-contrast-text` answers the question for
+  a PDF by measuring what was actually painted. Guessing it from a colour
+  attribute alone would report white-on-white and miss white-on-pale-grey, and
+  would fire on a coloured banner where the background is the one thing the
+  reader can see.
 - **A comment's date in a .doc.** The 30-byte `ATRD` LibreOffice writes has an
   owner index and initials and no date at all, so there is nothing on this
   machine to test a reader of the longer form against.

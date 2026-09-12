@@ -2,17 +2,20 @@
 
 `about.py` argues that a count belongs "in the README beside the list it
 counts", and that reasoning was right. It was also not enough: the README then
-said **22 detectors** while the source emitted 25, and said **439 tests** while
-the suite collected 706. Putting a number next to a list does not keep the
-number true. Only something that fails when they disagree does.
+said **22 detectors** while the source emitted 25. Putting a number next to a
+list does not keep the number true. Only something that fails when they
+disagree does.
+
+The count of tests is no longer stated at all. A number that grows with every
+commit is a maintenance cost on the front page and tells a reader nothing they
+can act on, whether or not a test keeps it honest.
 
 So the tables are parsed. Every slug the source can emit has to appear in a
 detector table, every slug in a table has to be one the source actually emits,
 and the badge has to agree with both. Any of the three failing is a red test
 rather than a wrong front door.
 
-The two other counts the README states - specimens and tests - are held the
-same way, at the bottom of this file.
+The specimen count is held the same way, at the bottom of this file.
 
 ## What counts as a detector, to a parser
 
@@ -50,9 +53,8 @@ DETECTOR_HEADER = ("detector", "what it reports")
 #: `![... 25 detectors ...](...detectors-25-...)` in the badge line.
 _BADGE = re.compile(r"badge/detectors-(\d+)-")
 
-#: "There are 31 of them and they are the test suite" and "713 tests."
+#: "There are 31 of them and they are the test suite".
 _SPECIMENS = re.compile(r"There are (\d+) of them")
-_TESTS = re.compile(r"^(\d+) tests\.$", re.MULTILINE)
 
 SPECIMENS = ROOT / "tests" / "specimens"
 
@@ -196,26 +198,6 @@ def test_the_specimen_count_is_the_number_of_specimens():
     assert int(claimed.group(1)) == len(_specimen_files())
 
 
-def test_the_test_count_is_the_number_of_tests(request):
-    """Asserted against what this run actually collected.
-
-    Only on a whole-suite run: `pytest tests/test_sheets.py` collects a subset
-    by design, and a check that called that a stale README would be a check
-    nobody could run.
-    """
-    arguments = request.session.config.args
-    whole_suite = [Path(a).resolve() for a in arguments] == [ROOT / "tests"]
-    if not whole_suite:
-        import pytest
-
-        pytest.skip(f"subset run: {arguments}")
-
-    claimed = _TESTS.search(README.read_text(encoding="utf-8"))
-
-    assert claimed, "README no longer states how many tests there are"
-    assert int(claimed.group(1)) == request.session.testscollected
-
-
 def test_every_specimen_says_where_it_came_from():
     """The README says each specimen has a provenance note. It has to be true.
 
@@ -229,3 +211,100 @@ def test_every_specimen_says_where_it_came_from():
         if not path.with_suffix(".md").exists()
     )
     assert not missing, f"specimens with no provenance note: {missing}"
+
+
+# --------------------------------------------------------------------------
+# what runs on what
+# --------------------------------------------------------------------------
+#
+# A check that did not run cannot report anything, and the README now says
+# which formats reach which check. That claim went unstated for a long time,
+# and while it did, `covered-text` - the finding on the front page, the one
+# the wordmark is about - worked on PDF and nothing else, with nothing on the
+# page saying so.
+#
+# The claim is derived from the readers rather than declared twice: a reader
+# can only reach a detector by filling the channel that detector is gated on
+# in `detect.py`.
+
+READERS = SOURCE / "readers"
+
+#: Which channel each row of the README table is fed by.
+ROWS = {
+    "what the page paints": "drawn",
+    "characters in the text": "units",
+    "text the file marks as not to be drawn": "hidden",
+    "hidden sheets, rows and columns": "sheets",
+    "hidden slides and speaker notes": "slides",
+    "the embedded thumbnail": "image",
+    "tracked changes and comments": "revisions",
+    "whole files carried inside": "attachments",
+    "earlier revisions": "earlier",
+    "metadata against": "metadata",
+}
+
+#: What a reader module is called on the front page.
+FORMATS = {
+    "docx": ("DOCX",),
+    "image": ("JPEG",),
+    "legacy": ("DOC",),
+    "odf": ("ODT",),
+    "pdf": ("PDF",),
+    "plain": ("text",),
+    "presentation": ("PPTX", "ODP"),
+    "spreadsheet": ("XLSX", "ODS"),
+}
+
+#: Two places where the channel a reader fills does not settle the answer.
+#:
+#: `legacy` reads three formats to different depths - only a .doc has its text
+#: read, while a .xls and a .ppt give up their property streams and nothing
+#: else - and the channel is the same object either way.
+#:
+#: `attachments` is filled by `read()` for every zip after the reader has
+#: returned, so no reader but the PDF one mentions it.
+DEPTH = {
+    ("legacy", "metadata"): ("DOC", "XLS", "PPT"),
+    ("pdf", "attachments"): ("PDF", "DOCX", "ODT", "XLSX", "ODS", "PPTX", "ODP"),
+}
+
+
+def _filled() -> dict[str, set[str]]:
+    """Which reader module fills each channel of the extraction.
+
+    A keyword whose value is written `()` is a reader saying it never has one:
+    the image reader passes `units=()`, because a photograph has no text, and
+    counting it would put JPEG on the row about characters in the text.
+    """
+    ignored = {"kind", "remarks", "source", "text_unread", "sha256"}
+    out: dict[str, set[str]] = {}
+    for path in sorted(READERS.glob("*.py")):
+        if path.name in ("__init__.py", "model.py"):
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if not isinstance(node, ast.Call) or getattr(node.func, "id", "") != "Extraction":
+                continue
+            for keyword in node.keywords:
+                if keyword.arg in ignored or keyword.arg is None:
+                    continue
+                if isinstance(keyword.value, ast.Tuple) and not keyword.value.elts:
+                    continue
+                out.setdefault(keyword.arg, set()).add(path.stem)
+    return out
+
+
+def test_the_readme_says_which_formats_reach_which_check():
+    filled = _filled()
+    rows = {cells[0]: cells[1] for cells in _rows(("what is checked", "runs on"))}
+    assert len(rows) == len(ROWS), sorted(rows)
+
+    for lead, channel in ROWS.items():
+        stated = next((v for k, v in rows.items() if k.startswith(lead)), None)
+        assert stated is not None, f"the README no longer has a row for {lead!r}"
+
+        reached: set[str] = set()
+        for module in filled.get(channel, ()):
+            reached.update(DEPTH.get((module, channel), FORMATS[module]))
+
+        named = {name.strip() for name in stated.split(",")}
+        assert named == reached, (lead, sorted(named), sorted(reached))

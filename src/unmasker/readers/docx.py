@@ -7,6 +7,13 @@ report it as ordinary body text, which is the opposite of what it is. It is
 read separately, by `unmasker.ooxml.revisions`, which keeps the author and the
 date attached to it; the record comes back on the extraction.
 
+A run carrying `w:vanish` is kept out of the body for the same reason. Word
+does not draw it and no print of the document shows it, so folding it in would
+have the report say it had searched the text and found nothing hidden - about
+a file holding a sentence nobody can see. Worse, a name in a hidden run would
+count as shown, and the metadata detector would stay quiet about it. Those
+runs come back separately and become `invisible-text`.
+
 No new dependency: a DOCX is a zip of XML, and both are in the standard library.
 """
 
@@ -16,6 +23,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
+from ..hidden import HiddenRun
 from ..metadata import read_ooxml
 from ..metadata.detectors import describe
 from ..ooxml.revisions import read_revisions
@@ -34,25 +42,48 @@ def _parts(archive: zipfile.ZipFile) -> list[str]:
     return ordered
 
 
-def _text_of(xml: bytes) -> str:
-    """Paragraph text, one paragraph per line.
+def _vanished(run) -> bool:
+    """Whether Word was told not to draw this run.
+
+    `w:vanish` is a toggle, so it can be switched back off by a `w:val` of
+    false - a run that inherits hiding from its style and overrides it is
+    visible, and reporting it would be this tool inventing a finding.
+    """
+    properties = run.find(f"{W}rPr")
+    if properties is None:
+        return False
+    toggle = properties.find(f"{W}vanish")
+    if toggle is None:
+        return False
+    return toggle.get(f"{W}val", "true") not in ("0", "false", "off")
+
+
+def _text_of(xml: bytes) -> tuple[str, list[str]]:
+    """Paragraph text one paragraph per line, and the runs Word does not draw.
 
     Tabs become tabs and `w:br` becomes a newline, so a column of values does
     not collapse into one run and report a column number a reader cannot find.
     """
     root = ElementTree.fromstring(xml)
     lines: list[str] = []
+    hidden: list[str] = []
     for para in root.iter(f"{W}p"):
         buf: list[str] = []
-        for node in para.iter():
-            if node.tag == f"{W}t":
-                buf.append(node.text or "")
-            elif node.tag == f"{W}tab":
-                buf.append("\t")
-            elif node.tag == f"{W}br":
-                buf.append("\n")
+        for run in para.iter(f"{W}r"):
+            out = []
+            for node in run.iter():
+                if node.tag == f"{W}t":
+                    out.append(node.text or "")
+                elif node.tag == f"{W}tab":
+                    out.append("\t")
+                elif node.tag == f"{W}br":
+                    out.append("\n")
+            if _vanished(run):
+                hidden.append("".join(out))
+            else:
+                buf.append("".join(out))
         lines.append("".join(buf))
-    return "\n".join(lines)
+    return "\n".join(lines), hidden
 
 
 def read_docx(path: Path) -> Extraction:
@@ -75,14 +106,20 @@ def read_docx(path: Path) -> Extraction:
 
         units: list[TextUnit] = []
         remarks: list[str] = []
+        hidden: list[HiddenRun] = []
         for name in _parts(archive):
             try:
-                text = _text_of(archive.read(name))
+                text, unseen = _text_of(archive.read(name))
             except ElementTree.ParseError as exc:
                 remarks.append(f"{name} is not well-formed XML and was skipped: {exc}")
                 continue
             if text.strip():
                 units.append(TextUnit(text=text))
+            hidden.extend(
+                HiddenRun(text=run, part=name, mechanism="w:vanish")
+                for run in unseen
+                if run.strip()
+            )
 
         record = read_revisions(archive)
         remarks.extend(record.remarks)
@@ -99,5 +136,6 @@ def read_docx(path: Path) -> Extraction:
         units=tuple(units),
         remarks=tuple(remarks),
         revisions=record,
+        hidden=tuple(hidden),
         metadata=metadata,
     )
