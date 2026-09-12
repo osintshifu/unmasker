@@ -164,7 +164,7 @@ Exit status is part of the interface:
 | PDF revisions | pages and text left in the file by an incremental update, which the current document no longer points at |
 | Unicode | zero-width characters, bidi controls, tag characters, mixed scripts |
 | Word / ODT | tracked deletions, comments, revision history, metadata leaks |
-| Excel / Calc | hidden sheets, rows and columns, filtered rows, tracked cell changes |
+| Excel / Calc | hidden sheets, rows and columns, filtered rows, tracked cell changes, and a value a cell holds but draws nothing of |
 | PowerPoint / Impress | hidden slides, speaker notes, a shape drawn over text, and text parked beside a slide |
 | JPEG | stale EXIF thumbnails that can preserve content removed by cropping, and the XMP edit history an editor left behind |
 | Metadata | undisclosed values, local filesystem paths and conflicting metadata copies |
@@ -190,7 +190,7 @@ finding nothing.
 | text placed where the page or the slide does not show it | PDF, PPTX, ODP |
 | faint text, and text the page does not paint at all | PDF |
 | characters in the text: zero-width, direction controls, tag characters, mixed scripts | PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, DOC, text |
-| text the file marks as not to be drawn | DOCX, ODT, DOC |
+| text or a value the file says not to draw | DOCX, ODT, DOC, XLSX, ODS |
 | hidden sheets, rows and columns, and filtered rows | XLSX, ODS |
 | hidden slides and speaker notes | PPTX, ODP |
 | the embedded thumbnail against the image it sits in | JPEG |
@@ -497,7 +497,7 @@ unmasker tests/specimens/pdf/libreoffice-writer-image-over-text.pdf --json
 {
   "tool": "unmasker",
   "schema": "unmasker.scan/1",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "file": "tests/specimens/pdf/libreoffice-writer-image-over-text.pdf",
   "sha256": "d324105840b72c0d76c491150fe9220eabb4a87a3735afdb5de5af4c27fa0b66",
   "kind": "pdf",

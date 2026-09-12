@@ -99,6 +99,27 @@ def _cell_text(cell) -> str:
     return " ".join(line for line in lines if line)
 
 
+#: Where a cell keeps what it *is*, as against what it draws. OpenDocument
+#: states both on the cell itself, so unlike a .xlsx no style has to be
+#: resolved to tell them apart.
+VALUES = (
+    f"{OFFICE}value",
+    f"{OFFICE}date-value",
+    f"{OFFICE}time-value",
+    f"{OFFICE}boolean-value",
+    f"{OFFICE}string-value",
+)
+
+
+def _stored(cell) -> str:
+    """The value the cell holds, whatever it prints."""
+    for name in VALUES:
+        value = cell.get(name)
+        if value and value.strip():
+            return value.strip()
+    return ""
+
+
 def _cell_comments(cell) -> list[Comment]:
     found = []
     for annotation in cell.iter(f"{OFFICE}annotation"):
@@ -158,11 +179,27 @@ def _read_table(table, hidden: str | None) -> tuple[Sheet, list[Comment]]:
             width = _count(cell, f"{TABLE}number-columns-repeated")
             text = _cell_text(cell)
             comments.extend(_cell_comments(cell))
+
+            # A cell that prints nothing and holds something is a figure with
+            # a number format that draws none of it. Taking the printed text
+            # alone drops the figure and reports the sheet clean, which is how
+            # this reader used to answer it.
+            drawn = True
+            if not text.strip():
+                text, drawn = _stored(cell), False
+
             if text and width <= TAIL:
                 # A repeated cell holds the same value in each column it
                 # covers, so each of them is a place that value can be hidden.
                 for offset in range(width):
-                    cells.append(Cell(row=row_index, column=position + offset, text=text))
+                    cells.append(
+                        Cell(
+                            row=row_index,
+                            column=position + offset,
+                            text=text,
+                            drawn=drawn,
+                        )
+                    )
             position += width
         row_index += span
 

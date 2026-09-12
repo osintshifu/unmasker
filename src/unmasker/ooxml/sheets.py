@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import datetime
 import posixpath
+import re
 import zipfile
 from xml.etree import ElementTree
 
@@ -143,6 +144,79 @@ def _unquoted(code: str) -> str:
     return "".join(out)
 
 
+#: A colour or a condition, which draws nothing by itself.
+BRACKETED = re.compile(r"\[[^\]]*\]")
+
+
+def _sections(code: str) -> list[str]:
+    """A format code split on the semicolons that separate its sections.
+
+    Not on every semicolon: one inside a literal, or escaped, is a character
+    the sheet prints.
+    """
+    out: list[str] = []
+    current: list[str] = []
+    quoted = skip = False
+    for character in code:
+        if skip:
+            current.append(character)
+            skip = False
+        elif character == "\\":
+            current.append(character)
+            skip = True
+        elif character == '"':
+            quoted = not quoted
+            current.append(character)
+        elif character == ";" and not quoted:
+            out.append("".join(current))
+            current = []
+        else:
+            current.append(character)
+    out.append("".join(current))
+    return out
+
+
+def _draws(section: str) -> bool:
+    """Whether this section of a format puts anything on the sheet.
+
+    Deliberately conservative: it answers *no* only when there is literally
+    nothing left to print. Claiming a visible figure is hidden is the worse
+    mistake of the two, so anything this cannot account for counts as drawn.
+    """
+    return bool(BRACKETED.sub("", section).replace('""', "").strip())
+
+
+def _undrawn(code: str, value: str) -> bool:
+    """Whether the sheet shows nothing at all for this value in this format.
+
+    `;;;` is the folklore of this trick and LibreOffice writes `""` for the
+    same thing, so the rule is about what a section prints rather than about
+    a particular string. Which section applies is decided by the value, since
+    a format can hide the negatives and show the rest.
+    """
+    if not code or code == "General":
+        return False
+    sections = _sections(code)
+    try:
+        number = float(value)
+    except ValueError:
+        # Text takes the fourth section where a format has one, and is shown
+        # as typed where it does not.
+        return len(sections) >= 4 and not _draws(sections[3])
+
+    if len(sections) == 1:
+        chosen = sections[0]
+    elif len(sections) == 2:
+        chosen = sections[0] if number >= 0 else sections[1]
+    elif number > 0:
+        chosen = sections[0]
+    elif number < 0:
+        chosen = sections[1]
+    else:
+        chosen = sections[2]
+    return not _draws(chosen)
+
+
 def _is_date_format(identifier: int, code: str) -> bool:
     if identifier in BUILT_IN_DATES:
         return True
@@ -215,8 +289,8 @@ def _as_date(serial: str, code: str, epoch: datetime.date) -> str | None:
     return moment.isoformat()
 
 
-def _cell_text(cell, shared: list[str], formats=(), epoch=EPOCH) -> tuple[str, str]:
-    """The cell's text, and the format code the sheet shows it in.
+def _cell_text(cell, shared: list[str], formats=(), epoch=EPOCH) -> tuple[str, str, bool]:
+    """The cell's text, the format it is shown in, and whether it is shown.
 
     The second half is why this returns a pair. A number is stored one way and
     shown another - `45366` is a date, `240000` is `240 000,00 zl` - and a
@@ -227,33 +301,40 @@ def _cell_text(cell, shared: list[str], formats=(), epoch=EPOCH) -> tuple[str, s
     if kind == "s":
         value = cell.find(f"{MAIN}v")
         try:
-            return (shared[int((value.text or "").strip())] if value is not None else ""), ""
+            text = shared[int((value.text or "").strip())] if value is not None else ""
+            return text, "", True
         except (ValueError, IndexError):
-            return "", ""
+            return "", "", True
     if kind == "inlineStr":
         node = cell.find(f"{MAIN}is")
         text = "".join(t.text or "" for t in node.iter(f"{MAIN}t")) if node is not None else ""
-        return text, ""
+        return text, "", True
 
     value = cell.find(f"{MAIN}v")
     text = (value.text or "") if value is not None else ""
     if not text:
-        return "", ""
+        return "", "", True
 
     try:
         identifier, code = formats[int(cell.get("s", "0"))]
     except (ValueError, IndexError):
-        return text, ""
+        return text, "", True
+
+    if _undrawn(code, text):
+        # The stored value, and a flag saying the sheet prints none of it.
+        # Returning an empty string here would lose the figure entirely,
+        # which is how the OpenDocument reader used to answer this.
+        return text, "", False
 
     if _is_date_format(identifier, code):
         rendered = _as_date(text, code, epoch)
         # A rendered date needs no note: it *is* what the sheet shows.
-        return (rendered, "") if rendered else (text, code)
+        return (rendered, "", True) if rendered else (text, code, True)
     # Anything else keeps its stored number. Rendering `#,###.00" zl"` means
     # writing a number formatter, and one that is nearly right quotes a figure
     # that is nearly right - worse in a forensic report than an exact
     # quotation of what the file holds, said plainly.
-    return text, ("" if code in ("", "General") else code)
+    return text, ("" if code in ("", "General") else code), True
 
 
 def _read_worksheet(
@@ -285,11 +366,11 @@ def _read_worksheet(
             hidden_rows.add(number)
         for position, cell in enumerate(row.iter(f"{MAIN}c"), start=1):
             column = _column_of(cell.get("r") or "") or position
-            text, code = _cell_text(cell, shared, formats, epoch)
+            text, code, drawn = _cell_text(cell, shared, formats, epoch)
             if code:
                 applied.add(code)
             if text:
-                cells.append(Cell(row=number, column=column, text=text))
+                cells.append(Cell(row=number, column=column, text=text, drawn=drawn))
 
     return (
         Sheet(

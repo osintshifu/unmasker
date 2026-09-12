@@ -50,6 +50,15 @@ class Cell:
     column: int
     text: str
 
+    drawn: bool = True
+    """Whether the sheet shows this value at all.
+
+    A cell can hold a figure and show nothing, by carrying a number format
+    that draws nothing for it. The cell is not hidden, its row is not hidden
+    and its column is not hidden; it is simply empty to look at. `text` is
+    then the stored value, which is the thing worth reporting and the thing
+    that must not be counted as something a person read."""
+
 
 @dataclass(frozen=True)
 class Sheet:
@@ -91,7 +100,7 @@ class Sheet:
         for cell in self.cells:
             if cell.row in self.hidden_rows or cell.row in self.filtered_rows:
                 continue
-            if cell.column in self.hidden_columns:
+            if cell.column in self.hidden_columns or not cell.drawn:
                 continue
             rows.setdefault(cell.row, []).append(cell.text)
         return "\n".join("\t".join(rows[r]) for r in sorted(rows))

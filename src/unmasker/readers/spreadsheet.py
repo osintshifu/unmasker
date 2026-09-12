@@ -25,13 +25,14 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
+from ..hidden import HiddenRun
 from ..metadata import read_odf as read_odf_metadata
 from ..metadata import read_ooxml
 from ..metadata.detectors import describe
 from ..odf.sheets import read_sheets as read_odf_sheets
 from ..ooxml.sheets import read_sheets as read_ooxml_sheets
 from ..revisions import Revision, RevisionRecord
-from ..sheets import SheetRecord
+from ..sheets import SheetRecord, column_name
 from .model import Extraction, TextUnit, UnreadableFile
 
 OFFICE = "{urn:oasis:names:tc:opendocument:xmlns:office:1.0}"
@@ -140,6 +141,21 @@ def _assemble(record: SheetRecord, comments, metadata) -> Extraction:
             else "every sheet in this workbook is empty, so there was nothing to search"
         )
 
+    # A cell can hold a figure and draw none of it, by carrying a number
+    # format that prints nothing. Its row is not hidden and neither is its
+    # column, so nothing else here would ever mention it.
+    undrawn = tuple(
+        HiddenRun(
+            text=cell.text,
+            part=f"{sheet.name}!{column_name(cell.column)}{cell.row}",
+            mechanism="a number format that draws nothing",
+        )
+        for sheet in record.sheets
+        if not sheet.hidden
+        for cell in sheet.cells
+        if not cell.drawn and cell.text.strip()
+    )
+
     return Extraction(
         kind="spreadsheet",
         units=tuple(units),
@@ -147,6 +163,7 @@ def _assemble(record: SheetRecord, comments, metadata) -> Extraction:
         revisions=revisions,
         metadata=metadata,
         sheets=record,
+        hidden=undrawn,
     )
 
 

@@ -233,7 +233,7 @@ ROWS = {
     "text placed where the page or the slide does not show it": ("drawn", "slides"),
     "faint text, and text the page does not paint at all": ("drawn",),
     "characters in the text": ("units",),
-    "text the file marks as not to be drawn": ("hidden",),
+    "text or a value the file says not to draw": ("hidden",),
     "hidden sheets, rows and columns": ("sheets",),
     "hidden slides and speaker notes": ("slides",),
     "the embedded thumbnail": ("image",),

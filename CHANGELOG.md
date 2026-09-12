@@ -9,6 +9,41 @@ release: `unmasker.scan/1` for one file, `unmasker.survey/1` for a folder. A
 consumer should read that rather than the release number, because the release
 moves whenever anything does and the schema moves only when the shape changes.
 
+## [0.7.0] - 2026-09-12
+
+### Added
+
+- **A value a cell holds and draws nothing of.** The oldest way to hide a
+  figure in a spreadsheet is a number format that prints nothing: the cell is
+  not hidden, its row is not hidden and its column is not hidden, and it is
+  empty to look at while holding 250,000 to anything that reads the file. It
+  is `invisible-text`, the name a PDF render mode, a Word hidden run and an
+  `.odt` `text:display="none"` already produce.
+
+  The rule is about what a *section* of a format prints rather than about a
+  particular code, because LibreOffice writes `""` for the same thing the
+  folklore of this trick calls `;;;`. It is conservative on purpose: it
+  answers *draws nothing* only where there is literally nothing left to print,
+  since claiming a visible figure is hidden is the worse of the two mistakes.
+  `;;;` is handled by the same rule and is not verified against a real file,
+  because nothing here writes one.
+
+### Fixed
+
+- The two families were wrong about this in opposite directions. A `.xlsx`
+  read the value and reported it as a figure on the sheet, so the number
+  somebody had gone to the trouble of hiding was quoted back as though it were
+  printed - and counted as visible text for every detector downstream. An
+  `.ods` took the cell's empty `<text:p/>`, decided the cell held nothing and
+  **dropped the value entirely**, so the workbook came back with nothing found
+  because the only place the number lived was never looked at.
+
+### Notes
+
+The coverage table caught this one itself: the channel gained a reader, the
+table still said DOCX, ODT and DOC, and the test failed. That is the first
+time it has worked as designed rather than being corrected after the fact.
+
 ## [0.6.0] - 2026-09-12
 
 ### Added
