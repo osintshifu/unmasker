@@ -76,8 +76,8 @@ unmasker tests/specimens/pdf/libreoffice-writer-black-bars.pdf
 Every finding says what a human sees, what a machine reads, where the mismatch
 is and how the tool knows.
 
-That file is a specimen committed to this repository, as is every other
-example on this page. Clone it and the commands run.
+Every example on this page runs against a file in the repository, so the
+output below each command is what that command prints.
 
 ## Installation
 
@@ -201,9 +201,6 @@ finding nothing.
 `--render` adds DOCX and ODT to the first row, by laying the document out with
 LibreOffice and looking at what it paints. It answers about that rendering
 rather than about the file, so what it finds is circumstantial and says so.
-
-This table is checked against the readers, so it cannot drift away from what
-the code can actually see.
 
 ## Practical examples
 
@@ -372,8 +369,7 @@ with the page after it is rendered? This can expose a hiding technique for
 which there is no dedicated detector yet.
 
 For PDF page comparison it requires `ghostscript` and `tesseract` on `PATH` and
-costs seconds per page, so it is intentionally opt-in and refused for directory
-surveys.
+costs seconds per page, so it is opt-in and refused for directory surveys.
 
 ## Detector reference
 
@@ -447,8 +443,8 @@ Each finding carries one of three evidence bases:
 - **circumstantial** - the observation is consistent with hiding, but an innocent explanation can also fit
 - **self-reported** - the document or application reports the fact about itself
 
-There are no severity scores or synthetic confidence percentages. Different
-questions are not ranked against each other.
+There are no severity scores and no ranking. Findings are not ordered by how
+bad they are, because that is the reader's judgement to make.
 
 > **"Nothing found" and "nothing could be searched" are different results.**
 > unmasker keeps them separate. JSON exposes this explicitly through the
@@ -471,8 +467,7 @@ from a file being investigated. HTML values are escaped, Markdown evidence is
 fenced or escaped, and generated HTML contains no JavaScript or external
 resources.
 
-The tool has no `--out` option. Redirection keeps the core rule simple:
-unmasker itself never writes to the input or to the case directory.
+There is no `--out` option: redirect the output where you want it.
 
 ## JSON and automation
 
@@ -501,7 +496,7 @@ unmasker tests/specimens/pdf/libreoffice-writer-image-over-text.pdf --json
 {
   "tool": "unmasker",
   "schema": "unmasker.scan/1",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "file": "tests/specimens/pdf/libreoffice-writer-image-over-text.pdf",
   "sha256": "d324105840b72c0d76c491150fe9220eabb4a87a3735afdb5de5af4c27fa0b66",
   "kind": "pdf",
@@ -552,39 +547,11 @@ The `/1` changes only when the JSON shape changes incompatibly. A normal
 package release does not force downstream consumers to guess whether their
 parser still works.
 
-## Design principles
-
-- **Evidence, not verdicts.** Report what can be shown and leave interpretation to the analyst.
-- **Absence is explicit.** Unreadable, unsearched and searched-with-no-findings are different states.
-- **Read-only.** Input files are never modified.
-- **Local.** No uploads and no network requests.
-- **Real specimens.** Detectors are tested against files produced by real applications, not only hand-built fixtures.
-- **No hidden ranking.** Findings are grouped by what was observed, not by an invented severity score.
-
-### What unmasker is not
+## What unmasker is not
 
 unmasker is not a malware scanner, DLP system, authenticity classifier or
 forensic verdict engine. It exposes discrepancies and residual content so a
 human or a downstream system can decide what they mean.
-
-## How it is tested
-
-Every detector fires on a committed specimen written by a real producer,
-including LibreOffice, headless Chrome, Ghostscript, Tesseract, exiftool,
-ImageMagick, poppler and pypdf. There are 48 of them and each has a provenance note describing how
-it was produced, what a person sees and what is actually stored inside.
-
-This matters because real producers routinely disagree with assumptions made
-from a file-format specification. The first PDF specimen, for example, showed
-that LibreOffice represented a redaction bar differently from the shape the
-initial detector design expected.
-
-Independent tooling such as Poppler is used where specimens need measurements,
-and detector behavior is mutation-tested so a broken rule has to break a test.
-The README is checked against the repository so the front page cannot silently
-drift away from the code: the detector list, the detector badge, the specimen
-count, and every example on this page - each command is run
-and its output compared to the block printed beneath it.
 
 ## Limits
 
@@ -592,34 +559,12 @@ and its output compared to the block printed beneath it.
 - No writing to the input file and no network access.
 - What a page paints is read straight from the file for PDF, and computed from the file for `.pptx` and `.odp`, where every shape carries absolute coordinates against a known slide size.
 - A word processor states neither. Its text flows, so a `.docx` or `.odt` says there is a filled shape and says there is text and never says one is over the other. `--render` answers it by laying the document out with LibreOffice and looking at what got painted — which means handing the file to another program, and answering about that rendering rather than about the file. Word lays a page out differently, so a bar that covers a name there may miss it here. Every finding from it is circumstantial and names the rendering it came from.
-- A `.doc` is read for its text as well as its metadata: the piece table, every story, and the property tables that say which characters are deleted or hidden. Its embedded objects are not opened, and character formatting other than the hidden attribute is not read.
+- A `.doc` is read for its text as well as its metadata, including its footnotes, headers, comments, tracked changes and hidden text. Objects embedded in it are not opened, and character formatting other than the hidden attribute is not read.
 - `.xls` and `.ppt` are read for what they say about themselves, not for their text. The compound-file container and both property streams are read; the BIFF and PowerPoint record streams inside them are not.
-- Signature coverage is not checked. A signed PDF's `/ByteRange` says which bytes it covers, and no signed specimen could be produced to test a detector against.
+- Signature coverage is not checked. A signed PDF's `/ByteRange` says which bytes the signature covers, and unmasker does not compare it against the rest of the file.
 - XMP is read in PDF and JPEG. DOCX and TIFF carry packets too and are not read yet.
-- Producer coverage is not universal. Microsoft Word and Adobe Acrobat are not part of the current specimen corpus, and different producers can encode the same feature differently.
+- Different applications encode the same feature differently, and coverage is strongest against files written by LibreOffice and the other open-source producers. A document written by Microsoft Word or Adobe Acrobat may store something in a way unmasker does not yet recognise.
 - OCR is optional, slower than structural detection and depends on external tools.
-
-See [`tests/specimens/README.md`](tests/specimens/README.md) for the current
-producer coverage and explicitly documented gaps.
-
-## Development
-
-```bash
-git clone https://github.com/osint-shifu/unmasker
-cd unmasker
-python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
-.venv/bin/pytest
-.venv/bin/ruff check .
-.venv/bin/mypy
-```
-
-Project references:
-
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) - development and specimen rules
-- [`SECURITY.md`](SECURITY.md) - security policy and threat model
-- [`CHANGELOG.md`](CHANGELOG.md) - release history
-- [`tests/specimens/README.md`](tests/specimens/README.md) - specimen provenance and coverage gaps
 
 ## License
 

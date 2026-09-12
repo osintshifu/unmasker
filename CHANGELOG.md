@@ -9,6 +9,19 @@ release: `unmasker.scan/1` for one file, `unmasker.survey/1` for a folder. A
 consumer should read that rather than the release number, because the release
 moves whenever anything does and the schema moves only when the shape changes.
 
+## [0.5.1] - 2026-09-12
+
+### Changed
+
+- The front page is written for whoever runs unmasker, not for whoever
+  maintains it. Out: the design-principles list, the section on how the
+  project is tested, the development setup, and the sentences explaining why
+  something was built one way rather than another - an option that does not
+  exist, a count nobody can act on, a note that a table is checked against the
+  code. What a reader needs to decide whether the tool answers their question
+  stays, and what they cannot do with it stays in Limits, stated as a limit
+  rather than as a reason.
+
 ## [0.5.0] - 2026-09-12
 
 ### Added

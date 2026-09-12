@@ -6,16 +6,15 @@ said **22 detectors** while the source emitted 25. Putting a number next to a
 list does not keep the number true. Only something that fails when they
 disagree does.
 
-The count of tests is no longer stated at all. A number that grows with every
-commit is a maintenance cost on the front page and tells a reader nothing they
-can act on, whether or not a test keeps it honest.
+Neither count is stated on the front page any more. A number that grows with
+every commit is a maintenance cost there and tells a reader nothing they can
+act on, whether or not a test keeps it honest - and how the corpus is built is
+written for whoever maintains this rather than for whoever runs it.
 
 So the tables are parsed. Every slug the source can emit has to appear in a
 detector table, every slug in a table has to be one the source actually emits,
 and the badge has to agree with both. Any of the three failing is a red test
 rather than a wrong front door.
-
-The specimen count is held the same way, at the bottom of this file.
 
 ## What counts as a detector, to a parser
 
@@ -52,9 +51,6 @@ DETECTOR_HEADER = ("detector", "what it reports")
 
 #: `![... 25 detectors ...](...detectors-25-...)` in the badge line.
 _BADGE = re.compile(r"badge/detectors-(\d+)-")
-
-#: "There are 31 of them and they are the test suite".
-_SPECIMENS = re.compile(r"There are (\d+) of them")
 
 SPECIMENS = ROOT / "tests" / "specimens"
 
@@ -189,13 +185,6 @@ def _specimen_files() -> set[Path]:
         and path.suffix != ".md"
         and "sources" not in path.relative_to(SPECIMENS).parts
     }
-
-
-def test_the_specimen_count_is_the_number_of_specimens():
-    claimed = _SPECIMENS.search(README.read_text(encoding="utf-8"))
-
-    assert claimed, "README no longer states how many specimens there are"
-    assert int(claimed.group(1)) == len(_specimen_files())
 
 
 def test_every_specimen_says_where_it_came_from():
