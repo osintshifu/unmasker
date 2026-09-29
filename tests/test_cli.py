@@ -601,3 +601,86 @@ def test_a_malformed_container_is_refused_rather_than_raised(capsys, tmp_path):
     code, _, err = run(capsys, str(bad))
     assert code == 2
     assert "Traceback" not in err
+
+
+def test_a_damaged_embedded_member_does_not_make_a_document_clean(capsys, tmp_path):
+    """A bad member CRC is detected when its bytes are read, after the outer
+    DOCX has already yielded its text. Losing the attachment must not turn an
+    incomplete reading into a clean result.
+    """
+    import struct
+
+    original = Path(__file__).parent / "specimens/docx/libreoffice-writer-embedded-sheet.docx"
+    damaged = bytearray(original.read_bytes())
+    name = b"word/embeddings/oleObject1.xlsx"
+    header = damaged.rfind(name) - 46
+    assert damaged[header : header + 4] == b"PK\x01\x02"
+    crc = struct.unpack_from("<I", damaged, header + 16)[0]
+    struct.pack_into("<I", damaged, header + 16, crc ^ 1)
+    path = tmp_path / "damaged.docx"
+    path.write_bytes(damaged)
+
+    code, out, _ = run(capsys, str(path), "--json")
+    report = json.loads(out)
+    assert code == 2
+    assert report["complete"] is False
+    assert "oleObject1.xlsx" in " ".join(report["remarks"])
+
+
+def test_archive_parts_are_bounded_before_they_are_read(capsys, monkeypatch):
+    """The producer's DOCX is small, so lowered budgets exercise both limits
+    without making CI build or decompress a large artificial document.
+    """
+    import unmasker.readers as readers
+
+    path = Path(__file__).parent / "specimens/docx/libreoffice-writer-embedded-sheet.docx"
+    monkeypatch.setattr(readers, "MAX_ZIP_MEMBER_SIZE", 2600, raising=False)
+    code, _, err = run(capsys, str(path))
+    assert code == 2
+    assert "word/document.xml" in err
+
+    monkeypatch.setattr(readers, "MAX_ZIP_MEMBER_SIZE", 32 * 1024 * 1024)
+    monkeypatch.setattr(readers, "MAX_ZIP_TOTAL_SIZE", 5000, raising=False)
+    code, _, err = run(capsys, str(path))
+    assert code == 2
+    assert "archive" in err and "limit" in err
+
+
+def test_an_embedded_workbook_over_the_read_limit_is_not_called_fully_checked(
+    capsys, monkeypatch
+):
+    import unmasker.readers as readers
+
+    path = Path(__file__).parent / "specimens/docx/libreoffice-writer-embedded-sheet.docx"
+    monkeypatch.setattr(readers, "HOLD", 1000)
+    code, out, _ = run(capsys, str(path), "--json")
+    report = json.loads(out)
+    assert code == 1
+    assert report["complete"] is False
+    assert [f["detector"] for f in report["findings"]] == ["attached-file"]
+    assert "oleObject1.xlsx" in " ".join(report["remarks"])
+
+    monkeypatch.setattr(readers, "HOLD", 32 * 1024 * 1024)
+    monkeypatch.setattr(readers, "MAX_CARRIED_TOTAL_SIZE", 1000, raising=False)
+    code, out, _ = run(capsys, str(path), "--json")
+    report = json.loads(out)
+    assert code == 1
+    assert report["complete"] is False
+    assert [f["detector"] for f in report["findings"]] == ["attached-file"]
+
+
+def test_a_carried_workbook_refused_by_its_own_limit_leaves_the_document_incomplete(
+    capsys, monkeypatch
+):
+    import unmasker.readers as readers
+
+    path = Path(__file__).parent / "specimens/docx/libreoffice-writer-embedded-sheet.docx"
+    # The outer DOCX parts are below this size; the inner workbook has a
+    # larger styles.xml. The finding that it is carried is still established.
+    monkeypatch.setattr(readers, "MAX_ZIP_MEMBER_SIZE", 3000)
+    code, out, _ = run(capsys, str(path), "--json")
+    report = json.loads(out)
+    assert code == 1
+    assert report["complete"] is False
+    assert [f["detector"] for f in report["findings"]] == ["attached-file"]
+    assert "oleObject1.xlsx" in " ".join(report["remarks"])

@@ -26,6 +26,10 @@ class UnreadableFile(Exception):
     """
 
 
+class UnsupportedDocument(UnreadableFile):
+    """A valid container that holds no document format this tool reads."""
+
+
 @dataclass(frozen=True)
 class TextUnit:
     """One addressable run of text, and where in the document it came from.

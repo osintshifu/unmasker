@@ -18,14 +18,14 @@ from pypdf.errors import PyPdfError
 from .docx import read_docx
 from .image import read_image
 from .legacy import read_legacy
-from .model import Extraction, TextUnit, UnreadableFile
+from .model import Extraction, TextUnit, UnreadableFile, UnsupportedDocument
 from .odf import read_odf
 from .pdf import read_pdf
 from .plain import read_plain
 from .presentation import read_odp, read_pptx
 from .spreadsheet import odf_flavour, read_ods, read_xlsx
 
-__all__ = ["Extraction", "TextUnit", "UnreadableFile", "read"]
+__all__ = ["Extraction", "TextUnit", "UnreadableFile", "UnsupportedDocument", "read"]
 
 def _digest(path: Path) -> str:
     """sha256 of the file, read in blocks so a large one costs no memory.
@@ -49,8 +49,36 @@ def _digest(path: Path) -> str:
 #: an embedded video to discover it is a video is not worth the memory.
 HOLD = 32 * 1024 * 1024
 
+# Archive parts parsed as XML are materialised by the format readers. Reuse
+# the existing per-object memory boundary and allow several such parts in one
+# document, while leaving large images and videos alone when only their names
+# are needed. The largest parsed member in the committed corpus is under 54 KB.
+MAX_ZIP_MEMBER_SIZE = HOLD
+MAX_ZIP_TOTAL_SIZE = 8 * HOLD
+MAX_CARRIED_TOTAL_SIZE = 4 * HOLD
 
-def _embedded(path: Path) -> tuple:
+
+def _check_zip_sizes(path: Path, archive: zipfile.ZipFile) -> None:
+    """Refuse archive parts that would be expanded into unbounded XML bytes."""
+    total = 0
+    for entry in archive.infolist():
+        name = entry.filename.lower()
+        if not (name.endswith((".xml", ".rels")) or name == "mimetype"):
+            continue
+        if entry.file_size > MAX_ZIP_MEMBER_SIZE:
+            raise UnreadableFile(
+                f"{path.name} has archive member {entry.filename!r} of "
+                f"{entry.file_size} bytes; the limit is {MAX_ZIP_MEMBER_SIZE}"
+            )
+        total += entry.file_size
+        if total > MAX_ZIP_TOTAL_SIZE:
+            raise UnreadableFile(
+                f"{path.name} has {total} bytes in archive parts to read; "
+                f"the limit is {MAX_ZIP_TOTAL_SIZE}"
+            )
+
+
+def _embedded(path: Path) -> tuple[tuple, tuple[str, ...]]:
     """Whole files an office package carries as members.
 
     Both families do this and neither hides it: an embedded object is *on* the
@@ -69,33 +97,64 @@ def _embedded(path: Path) -> tuple:
     from .model import Attachment, describe_bytes
 
     found = []
+    problems: list[str] = []
     packages: dict[str, list[int]] = {}
+    held = 0
     try:
         with zipfile.ZipFile(path) as archive:
             for entry in archive.infolist():
                 parts = entry.filename.split("/")
                 if len(parts) > 2 and parts[1] == "embeddings" and parts[-1]:
-                    with archive.open(entry) as handle:
-                        head = handle.read(8)
-                    # Only a zip is worth holding: it is the only carried thing
-                    # this tool can read, and the cap keeps an embedded video
-                    # out of memory.
-                    keep = head.startswith(b"PK\x03\x04") and entry.file_size <= HOLD
+                    try:
+                        with archive.open(entry) as handle:
+                            head = handle.read(8)
+                        # Only a zip is worth holding: it is the only carried
+                        # thing this tool can read, and the cap keeps an
+                        # embedded video out of memory.
+                        is_zip = head.startswith(b"PK\x03\x04")
+                        if is_zip and entry.file_size > HOLD:
+                            problems.append(
+                                f"embedded file {entry.filename!r} was not read: "
+                                f"its {entry.file_size} bytes exceed the {HOLD}-byte limit"
+                            )
+                        within_total = held + entry.file_size <= MAX_CARRIED_TOTAL_SIZE
+                        if is_zip and entry.file_size <= HOLD and not within_total:
+                            problems.append(
+                                f"embedded file {entry.filename!r} was not read: "
+                                f"the {MAX_CARRIED_TOTAL_SIZE}-byte total limit was reached"
+                            )
+                        keep = is_zip and entry.file_size <= HOLD and within_total
+                        data = archive.read(entry) if keep else None
+                        if data is not None:
+                            held += len(data)
+                    except (
+                        OSError,
+                        zipfile.BadZipFile,
+                        zlib.error,
+                        EOFError,
+                        NotImplementedError,
+                        struct.error,
+                    ) as exc:
+                        problems.append(
+                            f"embedded file {entry.filename!r} could not be read: "
+                            f"{type(exc).__name__}: {exc}"
+                        )
+                        continue
                     found.append(
                         Attachment(
                             name=parts[-1],
                             size=entry.file_size,
                             part=entry.filename,
                             description=describe_bytes(head),
-                            data=archive.read(entry) if keep else None,
+                            data=data,
                         )
                     )
                 elif parts[0].startswith("Object ") and len(parts) > 1 and parts[-1]:
                     seen = packages.setdefault(parts[0], [0, 0])
                     seen[0] += entry.file_size
                     seen[1] += 1
-    except (OSError, zipfile.BadZipFile):
-        return ()
+    except (OSError, zipfile.BadZipFile) as exc:
+        problems.append(f"embedded files could not be listed: {type(exc).__name__}: {exc}")
 
     for package, (size, count) in packages.items():
         found.append(
@@ -109,7 +168,7 @@ def _embedded(path: Path) -> tuple:
             )
         )
 
-    return tuple(found)
+    return tuple(found), tuple(problems)
 
 
 #: Exceptions that mean *these bytes are malformed*, raised from inside the
@@ -172,7 +231,13 @@ def read(path: str | Path) -> Extraction:
         # to walk. Every zip container is read the same way here for the same
         # reason the digest is.
         if not extraction.attachments and head.startswith(b"PK\x03\x04"):
-            extraction = dataclasses.replace(extraction, attachments=_embedded(path))
+            attachments, problems = _embedded(path)
+            extraction = dataclasses.replace(
+                extraction,
+                attachments=attachments,
+                remarks=extraction.remarks + problems,
+                unsearched=extraction.unsearched + problems,
+            )
     except UnreadableFile:
         raise
     except MALFORMED as exc:
@@ -203,6 +268,7 @@ def _read_zip(path: Path) -> Extraction:
 
     try:
         with zipfile.ZipFile(path) as archive:
+            _check_zip_sizes(path, archive)
             names = set(archive.namelist())
     except (OSError, zipfile.BadZipFile) as exc:
         raise UnreadableFile(f"{path.name} is not a readable zip: {exc}") from exc
@@ -225,7 +291,7 @@ def _read_zip(path: Path) -> Extraction:
         if flavour == "presentation":
             return read_odp(path)
         return read_odf(path)
-    raise UnreadableFile(
+    raise UnsupportedDocument(
         f"{path.name} is a zip but not a document unmasker reads: it holds "
         "no Word document, workbook or OpenDocument body"
     )

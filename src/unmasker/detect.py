@@ -74,7 +74,7 @@ def examine(extraction, ocr: bool = False, render: bool = False) -> Analysis:
     return _collect(extraction, ocr, render, descend=True)
 
 
-def _inside(attachments: tuple) -> tuple[list[Finding], bool]:
+def _inside(attachments: tuple) -> tuple[list[Finding], list[str], bool]:
     """Everything a carried office package holds, read as a document itself.
 
     A spreadsheet inside a report hides a sheet exactly as one on disk does,
@@ -92,10 +92,11 @@ def _inside(attachments: tuple) -> tuple[list[Finding], bool]:
     import tempfile
     from pathlib import Path
 
-    from .readers import UnreadableFile
+    from .readers import UnreadableFile, UnsupportedDocument
     from .readers import read as read_file
 
     found: list[Finding] = []
+    notes: list[str] = []
     complete = True
     for carried in attachments:
         if not carried.data:
@@ -109,12 +110,20 @@ def _inside(attachments: tuple) -> tuple[list[Finding], bool]:
             written.write_bytes(carried.data)
             try:
                 inner = read_file(written)
-            except UnreadableFile:
+            except UnsupportedDocument:
                 # A zip this tool does not read as a document. That it is there
                 # has already been said by `detect_attachments`.
                 continue
+            except UnreadableFile as exc:
+                complete = False
+                notes.append(f"embedded file {carried.name!r} could not be checked: {exc}")
+                continue
             analysis = _collect(inner, ocr=False, descend=False)
             complete = complete and analysis.complete
+            if not analysis.complete:
+                notes.append(f"embedded file {carried.name!r} was not fully checked")
+                for reason in (*inner.unsearched, *analysis.notes):
+                    notes.append(f"in embedded file {carried.name!r}: {reason}")
             for finding in analysis.findings:
                 found.append(
                     dataclasses.replace(
@@ -124,7 +133,7 @@ def _inside(attachments: tuple) -> tuple[list[Finding], bool]:
                         ),
                     )
                 )
-    return found, complete
+    return found, notes, complete
 
 
 def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bool = True):
@@ -234,8 +243,9 @@ def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bo
         # Saying a workbook is there and reading what is in it are two
         # findings, not a ranking. Both are reported.
         if descend:
-            carried, carried_complete = _inside(extraction.attachments)
+            carried, carried_notes, carried_complete = _inside(extraction.attachments)
             found.extend(carried)
+            notes.extend(carried_notes)
             complete = complete and carried_complete
 
     # Metadata is only a finding where it says something the document does not,
