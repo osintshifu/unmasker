@@ -8,7 +8,12 @@ from __future__ import annotations
 
 import dataclasses
 import hashlib
+import struct
+import zipfile
+import zlib
 from pathlib import Path
+
+from pypdf.errors import PyPdfError
 
 from .docx import read_docx
 from .image import read_image
@@ -107,23 +112,73 @@ def _embedded(path: Path) -> tuple:
     return tuple(found)
 
 
+#: Exceptions that mean *these bytes are malformed*, raised from inside the
+#: standard library or pypdf rather than from a check this code wrote.
+#:
+#: A single-bit flip in a zip's member data fails its CRC at `read()` time and
+#: not at open time, so guarding the archive's opening guards the wrong moment.
+#: The rest arrive the same way: a truncated deflate stream, a member name that
+#: is not UTF-8, a compression method the standard library declines, a member
+#: whose decompressed size does not fit in memory, or one so large the XML
+#: parser refuses its length outright.
+#:
+#: The list is exceptions that *describe the input*, deliberately. `TypeError`
+#: and `AttributeError` describe code that assumed a shape and are left to
+#: surface, even where they are raised from a dependency: a tool that turned
+#: every exception into "this file is malformed" would answer every one of its
+#: own bugs with a sentence blaming the document.
+MALFORMED = (
+    zipfile.BadZipFile,
+    zlib.error,
+    NotImplementedError,
+    UnicodeDecodeError,
+    struct.error,
+    EOFError,
+    MemoryError,
+    RecursionError,
+    OverflowError,
+    PyPdfError,
+)
+
+#: Known gap, named rather than implied: nothing here caps how much a member
+#: is allowed to decompress to, so a small archive holding one enormous entry
+#: is read in full before any of the above fires. The refusal is honest and
+#: the memory it costs to reach is not. A budget belongs with the other
+#: resource limits and needs a threshold somebody measured, not one invented
+#: here.
+
+
 def read(path: str | Path) -> Extraction:
-    """Read `path` into text units, or raise `UnreadableFile`."""
+    """Read `path` into text units, or raise `UnreadableFile`.
+
+    Every failure of the reading itself leaves by this one door, so a caller
+    has exactly two outcomes to handle. What happens *after* a successful
+    reading - a render that timed out, an OCR pass that failed - is a different
+    thing and is carried on `Analysis.complete`, because findings already
+    established must survive it.
+    """
     path = Path(path)
     try:
         head = path.open("rb").read(8)
     except OSError as exc:
         raise UnreadableFile(f"cannot open {path}: {exc}") from exc
 
-    # Attached once here rather than in each reader, so a format added later
-    # cannot arrive without it.
-    extraction = dataclasses.replace(_dispatch(path, head), sha256=_digest(path))
+    try:
+        # Attached once here rather than in each reader, so a format added
+        # later cannot arrive without it.
+        extraction = dataclasses.replace(_dispatch(path, head), sha256=_digest(path))
 
-    # The PDF reader fills these itself, because the name tree is pypdf's to
-    # walk. Every zip container is read the same way here for the same reason
-    # the digest is.
-    if not extraction.attachments and head.startswith(b"PK\x03\x04"):
-        extraction = dataclasses.replace(extraction, attachments=_embedded(path))
+        # The PDF reader fills these itself, because the name tree is pypdf's
+        # to walk. Every zip container is read the same way here for the same
+        # reason the digest is.
+        if not extraction.attachments and head.startswith(b"PK\x03\x04"):
+            extraction = dataclasses.replace(extraction, attachments=_embedded(path))
+    except UnreadableFile:
+        raise
+    except MALFORMED as exc:
+        raise UnreadableFile(
+            f"{path.name} could not be read: {type(exc).__name__}: {exc}"
+        ) from exc
     return extraction
 
 

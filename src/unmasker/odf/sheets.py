@@ -327,12 +327,18 @@ def _read_tracked_changes(
 
 def read_sheets(archive: zipfile.ZipFile) -> tuple[SheetRecord, tuple[Comment, ...]]:
     if "content.xml" not in archive.namelist():
-        return SheetRecord(remarks=("the file has no content.xml and was not read",)), ()
+        return SheetRecord(
+            remarks=("the file has no content.xml and was not read",),
+            unsearched=("this workbook's sheets, rows and columns",),
+        ), ()
 
     try:
         root = ElementTree.fromstring(archive.read("content.xml"))
     except ElementTree.ParseError as exc:
-        return SheetRecord(remarks=(f"content.xml is not well-formed XML: {exc}",)), ()
+        return SheetRecord(
+            remarks=(f"content.xml is not well-formed XML: {exc}",),
+            unsearched=("this workbook's sheets, rows and columns",),
+        ), ()
 
     invisible = _hidden_sheet_styles(root)
 

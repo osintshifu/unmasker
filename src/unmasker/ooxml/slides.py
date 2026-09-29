@@ -170,12 +170,18 @@ def _notes_text(xml: bytes) -> str:
 def read_slides(archive: zipfile.ZipFile) -> SlideRecord:
     names = set(archive.namelist())
     if PRESENTATION not in names:
-        return SlideRecord(remarks=("the file has no ppt/presentation.xml and was not read",))
+        return SlideRecord(
+            remarks=("the file has no ppt/presentation.xml and was not read",),
+            unsearched=("this deck's slides and speaker notes",),
+        )
 
     try:
         root = ElementTree.fromstring(archive.read(PRESENTATION))
     except ElementTree.ParseError as exc:
-        return SlideRecord(remarks=(f"ppt/presentation.xml is not well-formed XML: {exc}",))
+        return SlideRecord(
+            remarks=(f"ppt/presentation.xml is not well-formed XML: {exc}",),
+            unsearched=("this deck's slides and speaker notes",),
+        )
 
     size = root.find(f"{MAIN}sldSz")
     try:

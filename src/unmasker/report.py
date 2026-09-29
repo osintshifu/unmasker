@@ -168,6 +168,7 @@ def render(
     extraction: Extraction,
     findings: list[Finding],
     style: Style | None = None,
+    complete: bool = True,
 ) -> str:
     style = style or Style()
     out: list[str] = [""]
@@ -177,6 +178,10 @@ def render(
     # confusion CONTRIBUTING.md names: searched-and-empty is not nothing-to-search.
     if findings:
         count = _plural(len(findings), "finding")
+    elif not complete:
+        # Nothing was found *and* not everything was looked at. Printing only
+        # the first half here is how a reader comes to believe the second.
+        count = "not fully searched"
     elif extraction.has_text:
         count = "nothing hidden found"
     else:
@@ -231,9 +236,20 @@ def render(
     if findings:
         kinds = _plural(len(by_detector), "kind")
         tail += f". {_plural(len(findings), 'finding')} in {kinds}"
-    elif extraction.has_text:
+    elif extraction.has_text and complete:
         tail += ". Nothing hidden found by the detectors that exist"
     out.append(MARGIN + style.ink(tail + ".", MUTED))
+    if not complete:
+        # Last line before the digest, because it qualifies everything above
+        # it. The notes say which check did not run; this says that one did
+        # not, where a reader scanning the summary cannot miss it.
+        out.append(
+            MARGIN
+            + style.ink(
+                "Not every check this tool makes was made here; see the notes.",
+                MUTED,
+            )
+        )
     # Whole, never shortened: a digest with a piece missing checks nothing, and
     # the point of printing it is that somebody can re-derive it.
     if extraction.sha256:

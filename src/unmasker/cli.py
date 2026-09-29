@@ -6,14 +6,23 @@ the tool did, which is what keeps it a flag.
 
 Exit codes, and why there are three rather than two:
 
-    0   read, searched, nothing found
-    1   read, searched, findings exist
-    2   could not be read
+    0   the analysis finished and established nothing
+    1   one or more findings were established
+    2   nothing was established and the analysis did not finish
 
 There is deliberately no `--strict`: 1 is the CI gate already. But 2 has to be
-distinct from 0, because a file that could not be read is not a file that came
-back clean, and a pipeline that cannot tell those apart will eventually wave
-through the one document it should have stopped.
+distinct from 0, because a file the tool did not finish reading is not a file
+that came back clean, and a pipeline that cannot tell those apart will
+eventually wave through the one document it should have stopped.
+
+**A finding outranks an unfinished analysis.** `findings and not complete` is
+1, never 2. Two facts do not fit in one integer, and of the two, the finding
+is the one already established: an OCR pass that failed on page 7 does not
+make the black bar on page 1 less real. It also matters operationally, because
+2 is the code a pipeline is most likely to treat as its own problem - retry,
+skip, allow-failure - and a document with a finding in it must not be handed
+to that path. Completeness is carried in the report and in `--json`, where a
+consumer that needs both bits can have both.
 """
 
 from __future__ import annotations
@@ -141,6 +150,21 @@ def _directory(args) -> int:
         )
         return 2
 
+    if args.render:
+        # Refused rather than quietly dropped, which is what it used to be.
+        # A flag the caller passed and the tool ignored is the tool reporting
+        # on a check that never ran, which is the one thing it must not do.
+        #
+        # Refused rather than implemented, for now: laying out a folder means
+        # handing an arbitrary number of files somebody else wrote to another
+        # program, and the budget that would make that safe is not written yet.
+        print(
+            "unmasker: --render lays out one document at a time with another "
+            "program; it is refused on a directory. Run it on the file you want.",
+            file=sys.stderr,
+        )
+        return 2
+
     found = survey(args.file)
 
     if args.json:
@@ -153,9 +177,9 @@ def _directory(args) -> int:
     else:
         sys.stdout.write(render_survey(found, _style(args.width)))
 
-    if found.results and not found.read:
-        return 2
-    return 1 if found.hiding else 0
+    if found.hiding:
+        return 1
+    return 0 if found.complete else 2
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -196,7 +220,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 2
 
-    findings, notes = examine(extraction, ocr=args.ocr, render=args.render)
+    analysis = examine(extraction, ocr=args.ocr, render=args.render)
+    findings, notes = list(analysis.findings), list(analysis.notes)
     if notes:
         # What a detector learned about its own coverage. Dropping these is
         # the tool losing the difference between "searched and nothing there"
@@ -221,6 +246,9 @@ def main(argv: list[str] | None = None) -> int:
                 # meanings". False here means there was nothing to search, not
                 # that the search came back empty.
                 "searched": extraction.has_text,
+                # And whether everything that should have run, ran. False here
+                # is the difference between "clean" and "as far as I got".
+                "complete": analysis.complete,
                 "remarks": list(extraction.remarks),
                 "findings": [f.as_dict() for f in findings],
             },
@@ -234,9 +262,19 @@ def main(argv: list[str] | None = None) -> int:
     elif args.md:
         sys.stdout.write(render_md(args.file, extraction, findings))
     else:
-        sys.stdout.write(render(str(args.file), extraction, findings, _style(args.width)))
+        sys.stdout.write(
+            render(
+                str(args.file),
+                extraction,
+                findings,
+                _style(args.width),
+                complete=analysis.complete,
+            )
+        )
 
-    return 1 if findings else 0
+    if findings:
+        return 1
+    return 0 if analysis.complete else 2
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -505,12 +505,18 @@ def _read_revision_log(
 def read_sheets(archive: zipfile.ZipFile) -> tuple[SheetRecord, tuple[Comment, ...]]:
     names = set(archive.namelist())
     if WORKBOOK not in names:
-        return SheetRecord(remarks=("the workbook has no xl/workbook.xml and was not read",)), ()
+        return SheetRecord(
+            remarks=("the workbook has no xl/workbook.xml and was not read",),
+            unsearched=("this workbook's sheets, rows and columns",),
+        ), ()
 
     try:
         book = ElementTree.fromstring(archive.read(WORKBOOK))
     except ElementTree.ParseError as exc:
-        return SheetRecord(remarks=(f"xl/workbook.xml is not well-formed XML: {exc}",)), ()
+        return SheetRecord(
+            remarks=(f"xl/workbook.xml is not well-formed XML: {exc}",),
+            unsearched=("this workbook's sheets, rows and columns",),
+        ), ()
 
     targets = _relationships(archive, WORKBOOK)
     shared = _shared_strings(archive)

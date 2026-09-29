@@ -229,12 +229,18 @@ def _read_page(page, hidden: bool, number: int, fills, sizes) -> Slide:
 
 def read_slides(archive: zipfile.ZipFile) -> SlideRecord:
     if "content.xml" not in archive.namelist():
-        return SlideRecord(remarks=("the file has no content.xml and was not read",))
+        return SlideRecord(
+            remarks=("the file has no content.xml and was not read",),
+            unsearched=("this deck's slides and speaker notes",),
+        )
 
     try:
         root = ElementTree.fromstring(archive.read("content.xml"))
     except ElementTree.ParseError as exc:
-        return SlideRecord(remarks=(f"content.xml is not well-formed XML: {exc}",))
+        return SlideRecord(
+            remarks=(f"content.xml is not well-formed XML: {exc}",),
+            unsearched=("this deck's slides and speaker notes",),
+        )
 
     invisible = _hidden_styles(root)
     fills = _fills(root)

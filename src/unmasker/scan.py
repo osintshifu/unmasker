@@ -74,6 +74,15 @@ class FileResult:
     """Why the file could not be read, in the reader's own words. `None` means
     it was read - which is not the same as it having nothing in it."""
 
+    complete: bool = True
+    """Whether every check this tool makes for this kind of file was made.
+
+    A refused file is never complete: nobody looked. A read file can also be
+    incomplete, when a container was recognised and not understood or a part
+    of it would not parse. The survey's own completeness is the product of
+    these, which is what keeps a folder from reporting clean on the strength
+    of the files that happened to work."""
+
     @property
     def was_read(self) -> bool:
         return self.refusal is None
@@ -105,6 +114,17 @@ class Survey:
     @property
     def hiding(self) -> tuple[FileResult, ...]:
         return tuple(r for r in self.results if r.findings)
+
+    @property
+    def complete(self) -> bool:
+        """Whether every file in this folder was read and fully checked.
+
+        One unreadable file among forty makes the survey incomplete, and that
+        is the point. "Twelve files hide something" tells a reader the other
+        twenty-eight are clean; they are not, because nobody looked at six of
+        them. The report has always said so in words - this is the same fact
+        where the exit code can reach it."""
+        return all(r.complete for r in self.results)
 
     @property
     def by_detector(self) -> dict[str, int]:
@@ -149,15 +169,16 @@ def read_one(path: Path, ocr: bool = False) -> FileResult:
         # The reason is kept rather than reduced to a flag: a reader deciding
         # whether to go and open the file needs to know whether the tool cannot
         # read that kind of document yet, or could not read this one.
-        return FileResult(path=path, refusal=str(exc))
+        return FileResult(path=path, refusal=str(exc), complete=False)
 
-    findings, notes = examine(extraction, ocr=ocr)
+    analysis = examine(extraction, ocr=ocr)
     return FileResult(
         path=path,
         kind=extraction.kind,
-        findings=tuple(findings),
-        remarks=tuple(extraction.remarks) + tuple(notes),
+        findings=analysis.findings,
+        remarks=tuple(extraction.remarks) + analysis.notes,
         searched=extraction.has_text,
+        complete=analysis.complete,
     )
 
 

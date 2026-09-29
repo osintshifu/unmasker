@@ -148,6 +148,12 @@ class SheetRecord:
     deletions: tuple[TrackedDeletion, ...] = ()
     remarks: tuple[str, ...] = field(default_factory=tuple)
 
+    unsearched: tuple[str, ...] = ()
+    """What this reading did not cover, when the part that would have answered
+    would not parse. An empty container and a container nobody could open are
+    different answers, and a record carrying only `remarks` makes a caller
+    tell them apart by reading prose."""
+
     @property
     def is_empty(self) -> bool:
         return not self.sheets

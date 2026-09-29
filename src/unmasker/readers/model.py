@@ -135,6 +135,22 @@ class Extraction:
     would be a claim about a comparison never made. The distinction the whole
     report is built on, applied to itself."""
 
+    unsearched: tuple[str, ...] = ()
+    """What this reading did not cover, each named in the reader's own words.
+
+    The sibling of `text_unread`, one level up: that field says a text layer
+    went undecoded, and this one says a whole question was never put. Two
+    things reach it. A container recognised but not understood - an HTML file
+    yields its text to any decoder, and `display:none`, `font-size:0` and
+    white-on-white are invisible to all of them, so reading the text and
+    reporting the file searched would state exactly what the evidence does not
+    support. And a part of a file this tool does read but could not this time,
+    such as an embedded-file table that would not parse.
+
+    Empty means every check this tool makes for this kind of file was made.
+    It is what `Analysis.complete` is built from, so it is set where the gap
+    is known - never recovered later by reading the remarks back."""
+
     earlier: tuple = ()
     """Earlier revisions this file still holds, as `Revision` records.
 

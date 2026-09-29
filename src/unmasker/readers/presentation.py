@@ -70,6 +70,9 @@ def _assemble(record: SlideRecord, metadata) -> Extraction:
         remarks=tuple(remarks),
         metadata=metadata,
         slides=record,
+        # A deck whose own description would not parse was not searched, and
+        # an empty deck and an unreadable one must not give the same answer.
+        unsearched=record.unsearched,
     )
 
 

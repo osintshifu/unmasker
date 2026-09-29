@@ -139,7 +139,7 @@ unmasker ~/cases/kowalski --html > report.html
 | `--html` | one self-contained HTML report, ready to send to someone |
 | `--md` | Markdown for a wiki, a ticket or a pull request |
 | `--ocr` | render a page and read it back to catch mismatches without knowing the hiding technique |
-| `--render` | lay a word-processor document out with LibreOffice and look at what it paints |
+| `--render` | lay a word-processor document out with LibreOffice and look at what it paints; one file at a time, refused on a folder |
 | `--width N` | wrap terminal output at N columns |
 | `--version` | print the version and exit |
 | `-h`, `--help` | show the full option list |
@@ -148,13 +148,19 @@ Exit status is part of the interface:
 
 | Code | Meaning |
 | :--- | :--- |
-| `0` | read, searched, nothing found |
-| `1` | read, searched, findings exist |
-| `2` | could not be read |
+| `0` | the analysis finished and established nothing |
+| `1` | one or more findings were established |
+| `2` | nothing was established and the analysis did not finish |
 
-> **A file that could not be read is not a file that came back clean.**
-> unmasker keeps those states separate so a pipeline cannot silently treat
-> failure as a clean result.
+> **A file the tool did not finish reading is not a file that came back
+> clean.** unmasker keeps those states separate so a pipeline cannot silently
+> treat an unfinished analysis as a clean result.
+
+A finding outranks an unfinished analysis. `1` never weakens to `2`: an OCR
+pass that failed on page 7 does not make the black bar on page 1 less real,
+and `2` is the code a pipeline is most likely to treat as its own problem and
+retry. Both facts are in the report and in `--json`, where the `complete`
+field carries the second one.
 
 ## What it finds
 
@@ -476,7 +482,12 @@ There is no `--out` option: redirect the output where you want it.
 pipeline gate:
 
 ```bash
-unmasker document.pdf --json > findings.json || echo "findings exist"
+unmasker document.pdf --json > findings.json
+case $? in
+  0) echo "clean" ;;
+  1) echo "findings exist" ;;
+  2) echo "analysis did not finish - see remarks in findings.json" ;;
+esac
 ```
 
 The JSON shape is versioned separately from the package version:
@@ -486,6 +497,7 @@ The JSON shape is versioned separately from the package version:
 | `schema` | `unmasker.scan/1` for one file or `unmasker.survey/1` for a folder |
 | `version` | the unmasker build that produced the report |
 | `searched` | `false` means there was nothing to search, not that a search came back empty |
+| `complete` | `false` means a check this tool makes was not made: a container it recognised and does not read, a part that would not parse, or an `--ocr` or `--render` step that failed |
 | `sha256` | the digest of the bytes that were read, so a finding can be checked against the file rather than the path |
 | `location.inside` | present when a finding came out of a file the document carries, naming it |
 
@@ -502,6 +514,7 @@ unmasker tests/specimens/pdf/libreoffice-writer-image-over-text.pdf --json
   "sha256": "d324105840b72c0d76c491150fe9220eabb4a87a3735afdb5de5af4c27fa0b66",
   "kind": "pdf",
   "searched": true,
+  "complete": true,
   "remarks": [
     "the file says it was made by Creator Writer; Producer LibreOffice 24.2, and dates itself CreationDate 2026-08-31T23:50:46Z"
   ],

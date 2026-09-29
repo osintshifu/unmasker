@@ -164,6 +164,11 @@ def _assemble(record: SheetRecord, comments, metadata) -> Extraction:
         metadata=metadata,
         sheets=record,
         hidden=undrawn,
+        # A workbook whose own description would not parse was not searched,
+        # however cleanly the rest of the file opened. "Nothing to search" and
+        # "nobody could look" are the two meanings this tool exists to keep
+        # apart, and the exit code has to be able to tell them apart as well.
+        unsearched=record.unsearched,
     )
 
 

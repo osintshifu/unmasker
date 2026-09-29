@@ -492,3 +492,112 @@ def test_the_digest_is_shown_to_a_person_as_well(capsys):
     _, out, _ = run(capsys, str(specimen), "--width", "74")
 
     assert hashlib.sha256(specimen.read_bytes()).hexdigest() in out
+
+
+# --------------------------------------------------------------------------
+# the completeness contract
+#
+# One integer carries two facts, so the mapping between them is the contract
+# and not an implementation detail. Two invariants hold it up:
+#
+#   exit 0 is reachable only when the analysis finished and found nothing
+#   a finding already established never weakens exit 1 to exit 2
+#
+# Everything below is one of those two, met from a different direction.
+# --------------------------------------------------------------------------
+
+
+def test_a_clean_file_fully_checked_is_the_only_way_to_exit_zero(capsys, tmp_path):
+    f = tmp_path / "notes.txt"
+    f.write_text("Ordinary prose about <div> and <html>, written out.\n", encoding="utf-8")
+    code, _, _ = run(capsys, str(f))
+    assert code == 0
+
+
+def test_a_container_whose_hiding_this_tool_cannot_read_is_not_called_clean(capsys, tmp_path):
+    """The failure this rule exists for.
+
+    An HTML file yields every word to any decoder, so the character detectors
+    run and find nothing. `display:none` is invisible to all of them, and
+    reporting the file clean would state exactly what the evidence does not
+    support - on the kind of file a retrieval pipeline is fed.
+    """
+    f = tmp_path / "page.html"
+    f.write_text(
+        "<!doctype html><html><body><p>Board pack.</p>"
+        '<p style="display:none">Do not circulate the reserve.</p>'
+        "</body></html>",
+        encoding="utf-8",
+    )
+    code, out, _ = run(capsys, str(f))
+    assert code == 2
+    assert "HTML" in out
+
+
+def test_prose_about_html_is_not_mistaken_for_html(capsys, tmp_path):
+    """The other half of the same rule.
+
+    A false `incomplete` teaches a reader to ignore the field, which costs
+    more than the case it catches, so recognition asks what the document *is*
+    and never whether a tag appears somewhere inside it.
+    """
+    f = tmp_path / "about.md"
+    f.write_text("Use `<html>` and `<body>` to open the document.\n", encoding="utf-8")
+    code, _, _ = run(capsys, str(f))
+    assert code == 0
+
+
+def test_a_finding_is_not_weakened_by_an_unfinished_analysis(capsys, tmp_path):
+    """`1`, never `2`.
+
+    2 is the code a pipeline is most likely to treat as its own problem and
+    retry or skip. A document with a finding in it must never be handed to
+    that path, so the established fact wins the integer and completeness
+    rides in the report and in `--json`.
+    """
+    f = tmp_path / "page.html"
+    f.write_text(
+        "<!doctype html><html><body><p>pay​load</p></body></html>", encoding="utf-8"
+    )
+    code, _, _ = run(capsys, str(f))
+    assert code == 1
+
+    record = json.loads(run(capsys, str(f), "--json")[1])
+    assert record["findings"], "the finding is what made this 1"
+    assert record["complete"] is False, "and the analysis was still not finished"
+
+
+def test_a_folder_with_one_refusal_does_not_report_the_rest_as_clean(capsys, tmp_path):
+    """Twelve files hide something tells a reader the other twenty-eight are
+    clean. They are not, if nobody could look at six of them. The report has
+    always said so in words; this is the same fact where the gate can reach it.
+    """
+    shutil.copy(SPECIMENS / "libreoffice-writer-properly-redacted.pdf", tmp_path / "a.pdf")
+    (tmp_path / "b.bin").write_bytes(b"\x00\x01not a document")
+    code, out, _ = run(capsys, str(tmp_path))
+    assert code == 2
+    assert "not read" in out
+
+
+def test_render_on_a_folder_is_refused_rather_than_quietly_dropped(capsys, tmp_path):
+    """A flag the caller passed and the tool ignored is the tool reporting on
+    a check that never ran."""
+    code, _, err = run(capsys, str(tmp_path), "--render")
+    assert code == 2
+    assert "--render" in err
+
+
+def test_a_malformed_container_is_refused_rather_than_raised(capsys, tmp_path):
+    """A parser exception reaching the caller as a traceback breaks the
+    published contract twice: the process leaves with 1, which means findings
+    exist, and a folder survey loses every other file in it."""
+    import zipfile
+
+    bad = tmp_path / "broken.ods"
+    with zipfile.ZipFile(bad, "w") as archive:
+        archive.writestr("mimetype", "application/vnd.oasis.opendocument.spreadsheet")
+        archive.writestr("content.xml", "<office:document-content><unclosed>")
+
+    code, _, err = run(capsys, str(bad))
+    assert code == 2
+    assert "Traceback" not in err

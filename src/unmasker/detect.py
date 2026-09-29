@@ -13,6 +13,15 @@ that is not installed, a document that could not be laid out - and that is the
 difference between *searched and nothing there* and *nothing looked*, which is
 the distinction this whole tool is built on. Returning only the findings
 throws every one of those sentences away.
+
+**And one bit says whether it ran at all.** A note is prose; nothing can act
+on it. `Analysis.complete` is the same fact in a form the exit code can use,
+and it is set where the gap is known rather than recovered afterwards by
+reading the notes back - a string match on "could not" is not a contract.
+
+It is deliberately one bit and not a status per detector. Which check did not
+run is a question the report already answers in words, and a second machine
+channel is easy to add later and hard to take away.
 """
 
 from __future__ import annotations
@@ -35,13 +44,28 @@ from .text.invisible import scan_text
 from .thumbnails import detect as detect_thumbnails
 
 
+@dataclasses.dataclass(frozen=True)
+class Analysis:
+    """One reading of one file, and whether the reading finished.
+
+    `complete` is false when a check that should have run did not: a format
+    whose hiding mechanisms have no reader, a text layer left undecoded, or an
+    external step the caller asked for that failed. It is never false merely
+    because nothing was found.
+    """
+
+    findings: tuple[Finding, ...] = ()
+    notes: tuple[str, ...] = ()
+    complete: bool = True
+
+
 def collect(extraction, ocr: bool = False, render: bool = False) -> list[Finding]:
     """What this file disagrees with itself about."""
-    return examine(extraction, ocr, render)[0]
+    return list(examine(extraction, ocr, render).findings)
 
 
-def examine(extraction, ocr: bool = False, render: bool = False):
-    """That, and what the detectors could not do.
+def examine(extraction, ocr: bool = False, render: bool = False) -> Analysis:
+    """That, what the detectors could not do, and whether they all ran.
 
     Two entry points rather than one because almost every caller wants the
     findings and nothing else, and a report is the one that must also say
@@ -50,7 +74,7 @@ def examine(extraction, ocr: bool = False, render: bool = False):
     return _collect(extraction, ocr, render, descend=True)
 
 
-def _inside(attachments: tuple) -> list[Finding]:
+def _inside(attachments: tuple) -> tuple[list[Finding], bool]:
     """Everything a carried office package holds, read as a document itself.
 
     A spreadsheet inside a report hides a sheet exactly as one on disk does,
@@ -60,6 +84,10 @@ def _inside(attachments: tuple) -> list[Finding]:
     One level only. A package inside a package is not descended into, because
     a document that carries itself would otherwise be read forever, and the
     remark says so rather than letting the depth pass for coverage.
+
+    Completeness comes back with the findings. A carried workbook that could
+    not be fully checked leaves the carrying document not fully checked too -
+    the person was sent one file, and what is inside it is inside it.
     """
     import tempfile
     from pathlib import Path
@@ -68,6 +96,7 @@ def _inside(attachments: tuple) -> list[Finding]:
     from .readers import read as read_file
 
     found: list[Finding] = []
+    complete = True
     for carried in attachments:
         if not carried.data:
             continue
@@ -84,7 +113,9 @@ def _inside(attachments: tuple) -> list[Finding]:
                 # A zip this tool does not read as a document. That it is there
                 # has already been said by `detect_attachments`.
                 continue
-            for finding in _collect(inner, ocr=False, descend=False)[0]:
+            analysis = _collect(inner, ocr=False, descend=False)
+            complete = complete and analysis.complete
+            for finding in analysis.findings:
                 found.append(
                     dataclasses.replace(
                         finding,
@@ -93,7 +124,7 @@ def _inside(attachments: tuple) -> list[Finding]:
                         ),
                     )
                 )
-    return found
+    return found, complete
 
 
 def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bool = True):
@@ -105,6 +136,13 @@ def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bo
     """
     found: list[Finding] = []
     notes: list[str] = []
+
+    # Two coverage facts the reader established and this layer only carries:
+    # a container whose own hiding mechanisms nothing here reads, and a text
+    # layer that went undecoded. Either one means a check that belongs to this
+    # file was never made.
+    complete = not extraction.unsearched and not extraction.text_unread
+
     for unit in extraction.units:
         for finding in scan_text(unit.text):
             if unit.page is not None:
@@ -148,6 +186,9 @@ def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bo
         pictured, problems = detect_thumbnails(extraction.source, extraction.image, ocr=ocr)
         found.extend(pictured)
         notes.extend(problems)
+        # Only reachable with --ocr, so a problem here is a check the caller
+        # asked for and did not get.
+        complete = complete and not problems
 
     # A word processor does not say where its text falls, so the only way to
     # ask whether a shape is drawn over any of it is to lay the document out
@@ -162,6 +203,7 @@ def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bo
         with tempfile.TemporaryDirectory(prefix="unmasker-layout-") as folder:
             laid, problems = as_pdf(Path(str(extraction.source)), Path(folder))
             notes.extend(problems)
+            complete = complete and laid is not None and not problems
             if laid is not None:
                 found.extend(from_layout(read_file(laid)))
 
@@ -172,6 +214,9 @@ def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bo
         for painted in extraction.drawn:
             words, problems = read_page_back(extraction.source, painted.number, painted.box)
             notes.extend(problems)
+            # One page that would not render leaves the rest of the document
+            # read and this page unasked. That is not a clean page.
+            complete = complete and not problems
             found.extend(unrendered_text(painted, words))
             found.extend(unextractable_text(painted, words))
 
@@ -189,7 +234,9 @@ def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bo
         # Saying a workbook is there and reading what is in it are two
         # findings, not a ranking. Both are reported.
         if descend:
-            found.extend(_inside(extraction.attachments))
+            carried, carried_complete = _inside(extraction.attachments)
+            found.extend(carried)
+            complete = complete and carried_complete
 
     # Metadata is only a finding where it says something the document does not,
     # so the detector is given the document's own text to compare against.
@@ -201,4 +248,8 @@ def _collect(extraction, ocr: bool = False, render: bool = False, *, descend: bo
             )
         )
 
-    return sorted(found, key=lambda f: f.location.sort_key), notes
+    return Analysis(
+        findings=tuple(sorted(found, key=lambda f: f.location.sort_key)),
+        notes=tuple(notes),
+        complete=complete,
+    )

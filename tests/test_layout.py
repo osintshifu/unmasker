@@ -98,7 +98,7 @@ def test_the_flag_reaches_the_document_through_the_pipeline():
     flag did nothing at all."""
     from unmasker.detect import examine
 
-    findings, _ = examine(read(FLOWED[0]), render=True)
+    findings = examine(read(FLOWED[0]), render=True).findings
     assert [f for f in findings if f.detector == "covered-text"]
 
 
@@ -111,6 +111,7 @@ def test_a_document_that_was_not_laid_out_says_so(monkeypatch):
     from unmasker.detect import examine
 
     monkeypatch.setattr(module, "available", lambda: None)
-    findings, notes = examine(read(FLOWED[0]), render=True)
+    analysis = examine(read(FLOWED[0]), render=True)
+    findings, notes = analysis.findings, analysis.notes
     assert not [f for f in findings if f.detector == "covered-text"]
     assert any("LibreOffice was not found" in note for note in notes)

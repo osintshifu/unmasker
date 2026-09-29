@@ -67,7 +67,23 @@ def read_pdf(path: Path) -> Extraction:
 
     units: list[TextUnit] = []
     drawn: list[InterpretedPage] = []
-    for number, page in enumerate(reader.pages, start=1):
+
+    # The page tree is walked by pypdf, which reads `/Pages` off the catalogue
+    # and assumes it is there. A file that lost that key still opens, still has
+    # a trailer and still has metadata, and asking it for a page raises out of
+    # the dependency. Guarded here rather than in the general malformed-input
+    # list, because what is raised is `AttributeError` - which everywhere else
+    # means this code assumed a shape, and swallowing it wholesale would answer
+    # every future bug of our own with a sentence blaming the document.
+    try:
+        pages = list(enumerate(reader.pages, start=1))
+    except Exception as exc:
+        raise UnreadableFile(
+            f"{path.name} has no readable page tree, so no page of it could be "
+            f"searched: {type(exc).__name__}: {exc}"
+        ) from exc
+
+    for number, page in pages:
         try:
             text = page.extract_text() or ""
         except Exception as exc:
@@ -104,15 +120,19 @@ def read_pdf(path: Path) -> Extraction:
     if not units:
         remarks.append("the file has no pages")
 
+    gaps: list[str] = []
+    attachments = _attachments(reader, remarks, gaps)
+
     return Extraction(
         kind="pdf",
         units=tuple(units),
         remarks=tuple(remarks),
         drawn=tuple(drawn),
         metadata=metadata,
-        attachments=_attachments(reader, remarks),
+        attachments=attachments,
         earlier=_earlier(path, remarks),
         source=path,
+        unsearched=tuple(gaps),
     )
 
 
@@ -134,7 +154,7 @@ def _earlier(path: Path, remarks: list[str]) -> tuple:
     return tuple(found)
 
 
-def _attachments(reader, remarks: list[str]) -> tuple:
+def _attachments(reader, remarks: list[str], gaps: list[str]) -> tuple:
     """Whole files the document carries in `/Names/EmbeddedFiles`.
 
     Asked of pypdf rather than walked by hand: the name tree is a tree, the
@@ -146,25 +166,33 @@ def _attachments(reader, remarks: list[str]) -> tuple:
     unsearched, and that is a thing to say rather than a reason to abandon the
     report.
     """
+    # The guard has to cover the fetch, not the request. `reader.attachments`
+    # hands back a lazy mapping and the stream is read during iteration, so a
+    # try around the line below alone guards the wrong moment - the same shape
+    # of mistake as guarding a zip's opening and not its member reads.
+    found = []
     try:
         carried = reader.attachments
-    except Exception as exc:
-        remarks.append(f"the embedded-file table could not be read: {exc}")
-        return ()
-
-    found = []
-    for name, versions in carried.items():
-        for data in versions if isinstance(versions, list) else [versions]:
-            found.append(
-                Attachment(
-                    name=str(name),
-                    size=len(data),
-                    text=_as_text(data),
-                    part="/Names/EmbeddedFiles",
-                    description=describe_bytes(data[:8]),
-                    data=data if data.startswith(b"PK\x03\x04") else None,
+        for name, versions in carried.items():
+            for data in versions if isinstance(versions, list) else [versions]:
+                found.append(
+                    Attachment(
+                        name=str(name),
+                        size=len(data),
+                        text=_as_text(data),
+                        part="/Names/EmbeddedFiles",
+                        description=describe_bytes(data[:8]),
+                        data=data if data.startswith(b"PK\x03\x04") else None,
+                    )
                 )
-            )
+    except Exception as exc:
+        remarks.append(
+            f"the embedded-file table could not be read, so any file carried "
+            f"inside this one was not looked for: {type(exc).__name__}: {exc}"
+        )
+        gaps.append("the files carried inside this document")
+        return tuple(found)
+
     return tuple(found)
 
 
