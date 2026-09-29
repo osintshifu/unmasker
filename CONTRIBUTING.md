@@ -40,7 +40,7 @@ standard reads.
 So:
 
 1. Write a **builder** in `tests/specimens/sources/` that drives a real
-   producer — `soffice`, `google-chrome`, `gs`, `tesseract`, `exiftool` — to
+   producer - `soffice`, `google-chrome`, `gs`, `tesseract`, `exiftool` - to
    write the file.
 2. Commit the produced file. The specimens **are** the test suite here, which
    is why they are in git rather than gitignored.
@@ -50,8 +50,8 @@ So:
 Everything in a specimen must be invented. No real documents, no real people;
 the e-mail domain is `example.org`, which RFC 2606 reserves for the purpose.
 
-If the producer does something the specification does not describe — and it
-will — that is the most valuable thing in your pull request. Write it down.
+If the producer does something the specification does not describe - and it
+will - that is the most valuable thing in your pull request. Write it down.
 
 ## Watch the test fail first
 
@@ -92,14 +92,14 @@ It can mean *searched, and it is not there*. It can mean *there was nothing to
 search*. A reader who confuses those has drawn a conclusion the tool never
 supported.
 
-Carry the difference in the data rather than reconstructing it later — a PDF
+Carry the difference in the data rather than reconstructing it later - a PDF
 with no content stream to parse is not a PDF with nothing hidden, and the
 report has to be able to say which it met.
 
 ## The name of a field is evidence
 
 `LibreOffice/24.2.7.2$Linux_X86_64` contains a dotted quad. Pattern-matching
-alone reports an IP address — but the field is called `Producer`, so it is a
+alone reports an IP address - but the field is called `Producer`, so it is a
 version. Every metadata field's meaning is decided by its name **and its
 container**: a PDF's `/Creator` is an application, an OOXML `dc:creator` is a
 person.
@@ -109,7 +109,7 @@ Context you already have beats a cleverer pattern.
 ## Colour and words
 
 **Colour encodes how the tool knows, never how bad the finding is.** Three
-classes — `direct`, `circumstantial`, `self-reported` — and nothing else in
+classes - `direct`, `circumstantial`, `self-reported` - and nothing else in
 the output may use colour.
 
 Prefer a word a reader can argue with over a number that implies a precision
@@ -136,7 +136,7 @@ not what the tool did, which is what keeps it a flag.
 
 ## Commits
 
-Prose, and no trailers. Say what changed and **why** — the why is the part
+Prose, and no trailers. Say what changed and **why** - the why is the part
 that cannot be recovered from the diff. If a change corrects an earlier
 assumption, say what the assumption was.
 
@@ -152,8 +152,8 @@ is how a build artefact reaches a public repository.
 
 ## Reporting a bug
 
-The most useful report is a file. If it is not one you can share — and in this
-line of work it usually is not — a builder that produces something with the
+The most useful report is a file. If it is not one you can share - and in this
+line of work it usually is not - a builder that produces something with the
 same shape is just as good, and better for everyone.
 
 If a finding is wrong, say what the tool printed and what the document actually

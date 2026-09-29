@@ -93,8 +93,8 @@ uv tool install unmasker
 
 Python 3.10 or later. The default install has one runtime dependency: `pypdf`.
 unmasker runs locally, makes no network requests and never modifies the file it
-is given. Two optional flags call other programs — `--ocr` needs ghostscript and
-tesseract, `--render` needs LibreOffice — and both are off unless asked for.
+is given. Two optional flags call other programs - `--ocr` needs ghostscript and
+tesseract, `--render` needs LibreOffice - and both are off unless asked for.
 
 From a checkout:
 
@@ -174,9 +174,9 @@ field carries the second one.
 | PowerPoint / Impress | hidden slides, speaker notes, a shape drawn over text, and text parked beside a slide |
 | JPEG | stale EXIF thumbnails that can preserve content removed by cropping, and the XMP edit history an editor left behind |
 | Metadata | undisclosed values, local filesystem paths and conflicting metadata copies |
-| Legacy Word | a `.doc`'s text, story by story — body, footnotes, headers, footers, text boxes — with its comments, tracked changes and hidden runs |
+| Legacy Word | a `.doc`'s text, story by story - body, footnotes, headers, footers, text boxes - with its comments, tracked changes and hidden runs |
 | Legacy Office | what a `.xls` or `.ppt` says about itself, out of its compound-file property streams |
-| Attachments | whole files carried inside a document, which no page mentions — and what a carried workbook hides in turn |
+| Attachments | whole files carried inside a document, which no page mentions - and what a carried workbook hides in turn |
 | OCR comparison | text present in the file but absent from the rendered page, and the reverse |
 
 Supported inputs are PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, JPEG, UTF-8 text and legacy `.doc`, plus `.xls` and `.ppt` for their metadata.
@@ -187,7 +187,7 @@ extension.
 
 Not every check runs on every format, and a check that did not run cannot
 report anything. **If a format is missing from a row, that question was never
-asked about your file** — which is not the same answer as asking it and
+asked about your file** - which is not the same answer as asking it and
 finding nothing.
 
 | What is checked | Runs on |
@@ -386,9 +386,9 @@ The detector slug is stable output intended for reports and automation.
 
 | Detector | What it reports |
 | :--- | :--- |
-| `covered-text` | text underneath a filled shape — per character in a PDF, per text box on a slide |
+| `covered-text` | text underneath a filled shape - per character in a PDF, per text box on a slide |
 | `text-under-image` | text underneath an image, kept distinct from a filled-shape redaction |
-| `invisible-text` | text the file tells the application not to draw — a PDF render mode that paints nothing, or a Word run marked hidden |
+| `invisible-text` | text the file tells the application not to draw - a PDF render mode that paints nothing, or a Word run marked hidden |
 | `low-contrast-text` | text too close in colour to the background behind it |
 | `off-page-text` | text outside the visible page or crop box, and text parked beside a slide rather than on it |
 | `unrendered-text` | words stored in the file that OCR cannot find on the rendered page |
@@ -572,7 +572,7 @@ human or a downstream system can decide what they mean.
 - No verdicts about whether a document was manipulated or malicious.
 - No writing to the input file and no network access.
 - What a page paints is read straight from the file for PDF, and computed from the file for `.pptx` and `.odp`, where every shape carries absolute coordinates against a known slide size.
-- A word processor states neither. Its text flows, so a `.docx` or `.odt` says there is a filled shape and says there is text and never says one is over the other. `--render` answers it by laying the document out with LibreOffice and looking at what got painted — which means handing the file to another program, and answering about that rendering rather than about the file. Word lays a page out differently, so a bar that covers a name there may miss it here. Every finding from it is circumstantial and names the rendering it came from.
+- A word processor states neither. Its text flows, so a `.docx` or `.odt` says there is a filled shape and says there is text and never says one is over the other. `--render` answers it by laying the document out with LibreOffice and looking at what got painted - which means handing the file to another program, and answering about that rendering rather than about the file. Word lays a page out differently, so a bar that covers a name there may miss it here. Every finding from it is circumstantial and names the rendering it came from.
 - A `.doc` is read for its text as well as its metadata, including its footnotes, headers, comments, tracked changes and hidden text. Objects embedded in it are not opened, and character formatting other than the hidden attribute is not read.
 - `.xls` and `.ppt` are read for what they say about themselves, not for their text. The compound-file container and both property streams are read; the BIFF and PowerPoint record streams inside them are not.
 - Signature coverage is not checked. A signed PDF's `/ByteRange` says which bytes the signature covers, and unmasker does not compare it against the rest of the file.
