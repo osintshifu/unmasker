@@ -707,6 +707,14 @@ First release.
   out of the entropy-coded data, reporting a picture the size of noise. It now
   stops at `SOS`/`EOI` the way `_segments()` already did.
 
+[0.7.0]: https://github.com/osintshifu/unmasker/releases/tag/v0.7.0
+[0.6.0]: https://github.com/osintshifu/unmasker/releases/tag/v0.6.0
+[0.5.1]: https://github.com/osintshifu/unmasker/releases/tag/v0.5.1
+[0.5.0]: https://github.com/osintshifu/unmasker/releases/tag/v0.5.0
+[0.4.0]: https://github.com/osintshifu/unmasker/releases/tag/v0.4.0
+[0.3.2]: https://github.com/osintshifu/unmasker/releases/tag/v0.3.2
+[0.3.1]: https://github.com/osintshifu/unmasker/releases/tag/v0.3.1
+[0.3.0]: https://github.com/osintshifu/unmasker/releases/tag/v0.3.0
 [0.2.1]: https://github.com/osintshifu/unmasker/releases/tag/v0.2.1
 [0.2.0]: https://github.com/osintshifu/unmasker/releases/tag/v0.2.0
 [0.1.12]: https://github.com/osintshifu/unmasker/releases/tag/v0.1.12
