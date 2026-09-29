@@ -57,7 +57,7 @@ from . import __version__
 from .report import Style
 from .theme import FAINT, FOREGROUND, MUTED
 
-REPOSITORY = "github.com/osint-shifu/unmasker"
+REPOSITORY = "github.com/osintshifu/unmasker"
 SUMMARY = "Report what a human sees in a document against what a machine reads out of it."
 
 #: The bar, and what to draw it with where a terminal cannot encode a block.

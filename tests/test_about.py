@@ -238,3 +238,24 @@ def test_the_landing_screen_names_every_format_the_corpus_holds():
     words = set(re.findall(r"[a-z0-9]+", FORMATS.lower()))
     missing = sorted(folder for folder in folders if folder not in words)
     assert not missing, f"specimens exist for {missing}, which the screen does not name"
+
+
+def test_the_address_the_screen_prints_is_the_one_the_package_declares():
+    """The fourth way it goes stale, and the one nothing was holding.
+
+    `about.REPOSITORY` is printed at every reader who runs the bare command,
+    and it was a second copy of an address `pyproject.toml` already states.
+    Nothing compared them, so moving the repository left the screen pointing
+    somewhere the package does not - which is the same failure as printing a
+    command the reader cannot run, arriving through a URL instead of a flag.
+
+    Held against the packaging metadata rather than against a literal here,
+    because a literal is a third copy and would go stale beside the other two.
+    """
+    import re
+
+    manifest = (SOURCE.parent.parent / "pyproject.toml").read_text(encoding="utf-8")
+    declared = re.search(r'^Repository = "https://([^"]+)"', manifest, re.MULTILINE)
+    assert declared, "pyproject.toml no longer states a Repository URL"
+
+    assert about.REPOSITORY == declared.group(1).rstrip("/")

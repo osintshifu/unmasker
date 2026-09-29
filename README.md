@@ -12,7 +12,7 @@
 ![Runtime dependencies](https://img.shields.io/badge/runtime_dependencies-1-1f883d?style=flat-square)
 ![Local and read-only](https://img.shields.io/badge/local_%26_read--only-yes-1f883d?style=flat-square)
 ![Network requests](https://img.shields.io/badge/network_requests-none-1f883d?style=flat-square)
-[![CI](https://github.com/osint-shifu/unmasker/actions/workflows/ci.yml/badge.svg)](https://github.com/osint-shifu/unmasker/actions/workflows/ci.yml)
+[![CI](https://github.com/osintshifu/unmasker/actions/workflows/ci.yml/badge.svg)](https://github.com/osintshifu/unmasker/actions/workflows/ci.yml)
 ![License](https://img.shields.io/badge/license-Apache--2.0-8250df?style=flat-square)
 
 [Install](#installation) ·
@@ -99,7 +99,7 @@ tesseract, `--render` needs LibreOffice — and both are off unless asked for.
 From a checkout:
 
 ```bash
-git clone https://github.com/osint-shifu/unmasker
+git clone https://github.com/osintshifu/unmasker
 cd unmasker
 python3 -m venv .venv
 .venv/bin/pip install -e .
@@ -592,6 +592,6 @@ Apache License 2.0.
 
 *What a human sees in a document, against what a machine reads out of it.*
 
-Made by [osint-shifu](https://github.com/osint-shifu)
+Made by [osintshifu](https://github.com/osintshifu)
 
 </div>

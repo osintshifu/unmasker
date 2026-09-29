@@ -9,6 +9,10 @@ description = "What a human sees in a document, against what a machine reads out
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
+# The hyphen is not a typo and is not the GitHub account, which is
+# `osintshifu`. This is the PyPI username, which is spelled with one and
+# cannot be changed. Making the two match would mean naming an account
+# that does not own this package.
 authors = [{ name = "osint-shifu" }]
 keywords = [
   "redaction",
@@ -46,10 +50,10 @@ dependencies = ["pypdf>=5,<7"]
 dev = ["pytest>=8.2,<9", "ruff>=0.6,<1", "mypy>=1.11,<2"]
 
 [project.urls]
-Homepage = "https://github.com/osint-shifu/unmasker"
-Repository = "https://github.com/osint-shifu/unmasker"
-Issues = "https://github.com/osint-shifu/unmasker/issues"
-Changelog = "https://github.com/osint-shifu/unmasker/blob/master/CHANGELOG.md"
+Homepage = "https://github.com/osintshifu/unmasker"
+Repository = "https://github.com/osintshifu/unmasker"
+Issues = "https://github.com/osintshifu/unmasker/issues"
+Changelog = "https://github.com/osintshifu/unmasker/blob/master/CHANGELOG.md"
 
 [project.scripts]
 unmasker = "unmasker.cli:main"
