@@ -36,6 +36,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Security",
   "Topic :: Text Processing",
   "Topic :: Utilities",
@@ -63,6 +64,26 @@ packages = ["src/unmasker"]
 # PEP 561: without the marker inside the wheel, every annotation in this
 # package is invisible to anything that imports it as a library.
 artifacts = ["src/unmasker/py.typed"]
+
+# What a source distribution carries, stated rather than left to .gitignore:
+# hatchling reads .gitignore and not .git/info/exclude, so a build made in a
+# working checkout picked up whatever local notes sat beside the project.
+[tool.hatch.build.targets.sdist]
+only-include = [
+  ".editorconfig",
+  ".github",
+  ".gitignore",
+  ".pre-commit-config.yaml",
+  "CHANGELOG.md",
+  "CONTRIBUTING.md",
+  "LICENSE",
+  "README.md",
+  "SECURITY.md",
+  "assets",
+  "pyproject.toml",
+  "src/unmasker",
+  "tests",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
