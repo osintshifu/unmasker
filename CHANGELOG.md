@@ -284,7 +284,7 @@ them are all read here.
 - **Tracked changes**, with the author and the date of each. A deleted
   sentence is `deleted-text`, the same finding a DOCX deletion makes.
 
-- **Text carrying Word's hidden attribute**, as `invisible-text` — the name a
+- **Text carrying Word's hidden attribute**, as `invisible-text` - the name a
   PDF render mode that paints neither fill nor stroke already produces. The
   statement is identical: these characters are in the file and not on the page.
 
@@ -302,7 +302,7 @@ them are all read here.
 
 - **A deletion and a hidden run were being reported as text on the page.** A
   .doc keeps both in the piece table beside the printed text, and nothing in
-  the characters says which is which — that is a `Chpx`, in a 512-byte page,
+  the characters says which is which - that is a `Chpx`, in a 512-byte page,
   addressed by byte offset while everything else counts characters. Reading
   the piece table alone would have had this tool announce a deleted sentence
   as visible prose, and Word's hidden text as ordinary body text, which is the
@@ -319,7 +319,7 @@ them are all read here.
 `0x0800` is the delete mark and `0x0801` the insert, which is the opposite of
 what was written down from memory before the bytes were dumped. Guessing that
 pair the wrong way round produces a tool that takes insertions off the page
-*and* reports deletions as visible text — wrong in both directions, and green
+*and* reports deletions as visible text - wrong in both directions, and green
 against any fixture built from the same wrong memory. Every structure this
 release reads was measured against a real file first, and two others corrected
 a specification recalled wrongly: `GrpXstAtnOwners` has no header at all, and
@@ -684,7 +684,7 @@ First release.
   low-contrast text, off-page text; zero-width, bidi, tag and mixed-script
   characters; hidden sheets, rows, columns, filtered rows and tracked cell
   changes; hidden slides and speaker notes; stale EXIF thumbnails; tracked
-  deletions, comments, revision history and metadata leaks; and — with `--ocr` —
+  deletions, comments, revision history and metadata leaks; and - with `--ocr` -
   text that renders but does not extract, and text that extracts but does not
   render.
 - Readers for PDF, DOCX, ODT, XLSX, ODS, PPTX, ODP, JPEG and plain text,
@@ -696,7 +696,7 @@ First release.
 - `--json` for pipelines, with a `schema` field naming the shape and a
   `searched` field distinguishing *nothing was found* from *there was nothing to
   search*.
-- Three exit statuses: `0` clean, `1` findings, `2` unreadable — because a file
+- Three exit statuses: `0` clean, `1` findings, `2` unreadable - because a file
   that could not be read is not a file that came back clean.
 - `py.typed`, so the annotations are visible to anything importing `unmasker`
   as a library.
