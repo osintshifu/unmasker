@@ -9,7 +9,7 @@ to work on.
 
 ## How it was made
 
-`sources/build_libreoffice_writer.py`, on this machine, 2026-08-31:
+`sources/build_libreoffice_writer.py`, 2026-08-31:
 
 ```bash
 python3 tests/specimens/sources/build_libreoffice_writer.py \
@@ -72,13 +72,11 @@ W* n
 That is the page-sized clipping rectangle. `W* n` sets a clip and discards the
 path without painting it.
 
-This matters more than it looks. An early census recorded `re ×1` in a sibling
-LibreOffice PDF as evidence that the operators were present — but that single
-`re` was the page clip in that file too. A detector that looks for `re` followed
-by `f` finds **zero** bars here, and a hand-built fixture written from the PDF
-specification would have hidden that behind a green test suite. This is the
-`filetrail` HEIC bug in a new costume, caught before the detector was written,
-which is the whole reason the specimen comes first.
+This matters more than it looks. Counting `re ×1` in a LibreOffice PDF reads as
+evidence that the operators are present — but that single `re` is the page clip.
+A detector that looks for `re` followed by `f` finds **zero** bars here, and a
+hand-built fixture written from the PDF specification would have hidden that
+behind a green test suite, which is the whole reason the specimen comes first.
 
 ## Coordinate system
 

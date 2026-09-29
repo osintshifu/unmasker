@@ -88,8 +88,7 @@ def case_folder(tmp_path):
     # real, because a broken one would be refused for being broken and would
     # test nothing.
     #
-    # `deck.pptx` used to be the first of these. It is a real deck now - decks
-    # were refused outright until `libreoffice-impress` existed to write one.
+    # A deck is not one of these: decks are read, not refused.
     import zipfile
 
     with zipfile.ZipFile(tmp_path / "attachments.zip", "w") as bundle:

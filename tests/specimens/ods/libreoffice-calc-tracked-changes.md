@@ -94,5 +94,5 @@ same rule the DOCX reader follows, in a different container.
   of a deletion that quotes something is untested against a producer.
 - **A change to a cell on a hidden sheet**, which would be concealed twice
   over by two different mechanisms.
-- **Excel.** Not on this machine. Its change tracking is a shared-workbook
+- **Excel.** Not available here. Its change tracking is a shared-workbook
   feature it has been deprecating for years, and it may well disagree.

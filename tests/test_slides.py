@@ -17,11 +17,9 @@ half-reading them. Reading a deck as a text document would have reported a
 hidden slide and a speaker note as visible prose and then called the file
 clean - the same defect the spreadsheet reader was written to remove.
 
-The reader could not be written honestly because `libreoffice-impress` was not
-installed, so no producer on this machine could write a deck, and
-`CONTRIBUTING.md` is explicit that a detector proved only against a hand-built
-fixture is the shape of the bug that started this project. Installing Impress
-is the whole of what unblocked it.
+The reader waited on a producer rather than on the parsing: `CONTRIBUTING.md`
+is explicit that a detector proved only against a hand-built fixture proves
+nothing about a real deck.
 """
 
 from __future__ import annotations
@@ -156,7 +154,7 @@ def test_a_deck_that_hides_something_does_not_exit_clean(specimen):
 
 
 # --------------------------------------------------------------------------
-# the record, and what mutation testing asked for
+# the record, and the claims that need a test of their own
 # --------------------------------------------------------------------------
 
 
@@ -189,7 +187,7 @@ def test_a_hidden_slide_does_not_also_report_its_notes():
 
 
 # --------------------------------------------------------------------------
-# what mutation testing asked for
+# claims that need a test of their own
 #
 # Four claims the specimen cannot discriminate, because LibreOffice never
 # writes the shapes that would tell them apart. Each is held here instead, and
@@ -280,8 +278,7 @@ def test_slide_order_comes_from_the_deck_not_the_part_names():
         deck(
             # Declared in deck order. Sorted by part name they would come out
             # slide1, slide10, slide2 - so the two orders disagree, which is
-            # the whole point. An earlier version listed them in an order where
-            # both agreed, and proved nothing.
+            # the whole point. An order where both agree proves nothing.
             {
                 "slide1.xml": slide_xml("first"),
                 "slide2.xml": slide_xml("second"),

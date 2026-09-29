@@ -305,7 +305,7 @@ def test_a_producer_that_writes_one_glyph_per_operation_still_yields_words():
 
 def test_a_gap_wide_enough_to_be_a_space_breaks_a_word():
     """`WORD_GAP` is chosen, not measured, and this is the only thing holding
-    it: every producer on this machine writes space characters, so the
+    it: every producer used for the specimens writes space characters, so the
     whitespace rule fires first and no specimen reaches the geometry.
 
     A generator that positions each word with `Td` and writes no spaces is a
@@ -357,7 +357,7 @@ def test_a_gap_wide_enough_to_be_a_space_breaks_a_word():
 
 def test_painted_only_decides_which_question_is_being_asked():
     """The two OCR detectors ask opposite questions and need different word
-    lists, and nothing held that apart until mutation testing asked.
+    lists, and this is the only thing holding them apart.
 
     `redacted-scan-with-ocr.pdf` is a picture with an invisible OCR layer
     beneath it. For *is this in the file and not on the page*, none of that

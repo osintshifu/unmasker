@@ -167,8 +167,8 @@ def test_a_page_with_no_text_layer_says_what_is_painted_on_it_instead():
 
 def test_the_note_only_names_a_flag_that_would_work(monkeypatch):
     """CONTRIBUTING.md: every command the tool prints must run in the shell that
-    printed it. filetrail printed `filetrail --help` at somebody who had not
-    installed it, and the screen was disproved by the first thing they tried."""
+    printed it. A screen naming a command the reader cannot run is disproved
+    by the first thing they try."""
     import unmasker.pdf.rendered as rendered
 
     monkeypatch.setattr(rendered.shutil, "which", lambda name: None)
@@ -189,7 +189,7 @@ def test_a_plain_file_has_nothing_drawn(tmp_path):
 # These were refusal tests. `unmasker` turned a deck away outright and said so,
 # because reading one as a text document would have reported a hidden slide and
 # a speaker note as visible prose and then called the file clean - and the
-# reader could not be written honestly while no producer on this machine could
+# reader could not be written honestly while no producer was available to
 # write a deck to prove it against.
 #
 # What survives the refusal being lifted is the dispatch claim underneath it:

@@ -461,8 +461,7 @@ a separate problem of their own size and none is solved here.
   signed - the natural companion to `earlier-revision` and entirely
   deterministic. No detector is written, because nothing available can produce
   a signed specimen: `pdfsig` only verifies, pypdf does not sign, and
-  LibreOffice needs a certificate database this machine has no tooling to
-  build. A detector whose only fixture came from the specification is the
+  LibreOffice needs a certificate database no tooling here can build. A detector whose only fixture came from the specification is the
   mistake the specimen corpus exists to prevent.
 
   **Font anachronism.** A typeface has a first release, so a document dating

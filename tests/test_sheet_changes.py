@@ -177,7 +177,7 @@ def test_no_previous_value_leaks_into_the_visible_text(specimen):
 
 
 # --------------------------------------------------------------------------
-# what mutation testing asked for
+# claims a docstring makes that need a test of their own
 # --------------------------------------------------------------------------
 
 

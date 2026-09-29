@@ -1,13 +1,12 @@
 """The evidence model.
 
-Two rules from `CONTRIBUTING.md` shape everything here, and both were paid for in the
-sibling project.
+Two rules from `CONTRIBUTING.md` shape everything here.
 
 **Different questions are not ranked against each other.** A `Finding` carries
 no score, and nothing sorts findings by strength. A page can have a rectangle
 over its text *and* invisible characters *and* stale metadata; those are three
-findings, not one winner. `filetrail` printed the winner, and a geotagged
-photograph that had been downloaded reported its URL and no GPS at all.
+findings, not one winner. Print only the winner and a geotagged photograph
+that had also been downloaded reports its source URL and no GPS at all.
 
 **Nothing implies a precision we do not have.** `Basis` is a word, not a number,
 because `55` reads as a probability and never was one. A word can be argued

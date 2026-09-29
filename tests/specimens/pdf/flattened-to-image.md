@@ -41,7 +41,7 @@ here to hide, and the honest report says so: the page has no text layer, so the
 question of what is under the bars cannot be answered from the text — it would
 need OCR, which was deferred for most of the project's life.
 
-`filetrail` grew a `doctor` command for exactly this distinction. Expect to need
+A reader needs a way to state this distinction outright. Expect to need
 the equivalent, and expect this specimen to be the test for it.
 
 Note what this control does *not* cover: a page flattened to an image with an

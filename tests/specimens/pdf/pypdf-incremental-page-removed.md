@@ -35,7 +35,7 @@ catalogue points at, which is most of them and was all of this one until now.
 LibreOffice cannot write an incremental update, so pypdf performs the delete.
 It is a real writer used in real pipelines and **it** decides the byte layout,
 not this repository — one invented here would prove the detector can read what
-this repository invented, which is the mistake `filetrail`'s HEIC reader was
+this repository invented, which is the mistake this kind of reader is
 built on.
 
 pypdf is also this project's parser, and a reader agreeing with its own writer

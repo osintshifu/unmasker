@@ -181,7 +181,7 @@ def test_a_document_with_one_story_still_reads(plain):
 
 
 def test_a_compressed_piece_decodes_as_eight_bit_text():
-    """Nothing on this machine writes one.
+    """No available producer writes one.
 
     The specification presents the 8-bit piece as the ordinary case and
     LibreOffice never writes it, so this rewrites a real file's piece table to

@@ -19,9 +19,8 @@ order on everything it emits.
 **Alpha.** A shape at zero alpha paints nothing. Calling it a redaction would
 be reporting a finding that is not there.
 
-**Size.** A page-sized fill is the background. `filetrail`'s lesson about
-context: the shape alone cannot say what it is, but its size against the page
-can.
+**Size.** A page-sized fill is the background. Context decides: the shape
+alone cannot say what it is, but its size against the page can.
 
 **Not colour.** A white fill over black text hides it exactly as well as a
 black one. Colour decides what the *report* says a human sees, never whether
@@ -153,7 +152,7 @@ def _lines(page: InterpretedPage, include=_painted) -> list[list[tuple[Glyph, Te
             x, y = glyph.origin
             # Distance across the line: the origin projected onto the
             # perpendicular. For horizontal text this is exactly the baseline
-            # height, which is what it used to be.
+            # height.
             buckets.setdefault((angle, round(-x * dy + y * dx)), []).append((glyph, run))
 
     def along(pair: tuple[Glyph, TextRun]) -> float:
@@ -406,7 +405,7 @@ def _normalise(text: str) -> str:
 # is near zero, so anything in between separates them.
 #
 # Unlike `UNREAD_RUN`, this is **chosen and not measured**: no specimen here
-# exercises it, because every producer on this machine emits space characters
+# exercises it, because every producer used for the specimens emits spaces
 # and the whitespace rule fires first. It is defence against one that does not
 # - some generators position each word with `Td` and write no spaces at all -
 # and `test_a_gap_wide_enough_to_be_a_space_breaks_a_word` is the only thing
@@ -432,8 +431,8 @@ def _words_of(page: InterpretedPage, painted_only: bool = True) -> list[list[Gly
     inside each run turned one page's 62 words into 353. Five unread words
     became five unread letters, a far lower bar than the one measured.
 
-    The fifth place this project has found the same rule broken, after
-    `covered_text`, `invisible_text`, `low_contrast_text` and `off_page_text`.
+    The same rule governs `covered_text`, `invisible_text`, `low_contrast_text`
+    and `off_page_text`.
 
     Poppler settles the count, not this code: `pdftotext FILE - | wc -w` on
     four specimens, asserted in `tests/test_ocr.py`.
@@ -533,9 +532,8 @@ def unrendered_text(page: InterpretedPage, read: list[ReadWord]) -> list[Finding
 def unextractable_text(page: InterpretedPage, read: list[ReadWord]) -> list[Finding]:
     """Words the page shows that the file does not hold.
 
-    The gap the other way round, and the question this project has declined to
-    answer since its first specimen: a page with no text layer could be read
-    only by rendering it, and now it can be.
+    The gap the other way round: a page with no text layer can be read only by
+    rendering it.
 
     Only confident readings count. Claiming the page shows something the file
     lacks on the strength of a low-confidence guess would be inventing the
@@ -722,9 +720,8 @@ def low_contrast_text(page: InterpretedPage) -> list[Finding]:
     show-operation for longer than the others because LibreOffice writes whole
     words per operation in horizontal text, so nothing showed - until a page of
     *rotated* cells, where it writes one glyph at a time and one hidden line
-    came out as fifteen findings. Third time this rule has been broken in a
-    different place: `covered_text` had it with Chrome, `invisible_text` had it
-    with tesseract.
+    came out as fifteen findings. `covered_text` meets the same problem with
+    Chrome and `invisible_text` meets it with tesseract.
     """
     findings: list[Finding] = []
     for line in _lines(page):

@@ -48,7 +48,7 @@ speaker note as ordinary visible prose and then called the file clean — the
 same defect the spreadsheet reader was written to remove.
 
 The reader could not be written honestly, because `libreoffice-impress` was
-not installed: no producer on this machine could write a deck, and
+not installed: no available producer could write a deck, and
 `CONTRIBUTING.md` is explicit that a detector proved only against a hand-built
 fixture is the shape of the bug that started this project. Installing Impress
 is the whole of what unblocked it. The refusal was the right answer for as
@@ -76,7 +76,7 @@ Only the body placeholder is taken.
 
 ## What this specimen does not carry
 
-- **PowerPoint itself.** Not on this machine. LibreOffice writes valid
+- **PowerPoint itself.** Not available here. LibreOffice writes valid
   PresentationML, but two producers never agree about everything — the PDF
   specimens proved that twice and the spreadsheet specimens twice more.
 - **A comment.** PowerPoint stores them in `ppt/comments/`, and LibreOffice

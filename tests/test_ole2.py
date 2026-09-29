@@ -3,8 +3,8 @@
 `.doc`, `.xls` and `.ppt` are not zips and not XML. Each is a FAT filesystem in
 one file - sectors, an allocation table, a directory tree - with a second,
 smaller filesystem nested inside it for streams below 4096 bytes. Nothing in
-the standard library reads one, and this project has one runtime dependency
-which is not going to become two.
+the standard library reads one, and one runtime dependency is not going to
+become two.
 
 Every number asserted here was read out of the specimen before the reader
 existed. That order matters more than usual for a binary format: the
@@ -129,10 +129,9 @@ def test_a_word_97_file_is_dispatched_by_its_signature_not_its_name():
 def test_a_format_whose_text_is_unread_says_so_rather_than_reporting_none():
     """BIFF is not implemented, and a workbook must say that in those words.
 
-    This assertion used to be made against the .doc. Word's text is read now,
-    so the claim moved to a file it is still true of rather than being
-    loosened to keep passing - which is how a report ends up describing a
-    search that never happened.
+    The claim belongs on a file it is true of rather than being loosened to
+    keep passing - which is how a report ends up describing a search that
+    never happened.
     """
     extraction = read(WORKBOOK)
     assert extraction.text_unread is True

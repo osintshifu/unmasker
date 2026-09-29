@@ -57,7 +57,7 @@ of the page sees neither.
 In OOXML both live in separate parts of the zip and the mistake is harder to
 make.
 
-## What mutation testing added to this file
+## What this file carries for the tests alone
 
 The first version of it had a deletion, a comment, metadata and a zero-width
 space, and four mutations survived against it. Every one said the same thing:

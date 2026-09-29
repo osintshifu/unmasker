@@ -166,7 +166,7 @@ def test_json_says_which_files_were_refused_and_why(case_folder):
     record = as_json(survey(case_folder))
     refused = [f for f in record["files"] if f.get("refused")]
     # `Path(...).name`, not a split on "/": Windows spells the separator the
-    # other way and the first CI run on this said so.
+    # other way.
     assert {Path(f["file"]).name for f in refused} == {"attachments.zip", "photo.jpg"}
     assert all(isinstance(f["refused"], str) and f["refused"] for f in refused)
 

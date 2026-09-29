@@ -11,9 +11,8 @@ disagree with itself about*, once, for whoever is asking.
 their own coverage while running - a page that could not be rendered, a tool
 that is not installed, a document that could not be laid out - and that is the
 difference between *searched and nothing there* and *nothing looked*, which is
-the distinction this whole tool is built on. An earlier version rebound the
-extraction here to carry them and returned only the findings, so every one of
-those sentences was written and thrown away.
+the distinction this whole tool is built on. Returning only the findings
+throws every one of those sentences away.
 """
 
 from __future__ import annotations
@@ -56,7 +55,7 @@ def _inside(attachments: tuple) -> list[Finding]:
 
     A spreadsheet inside a report hides a sheet exactly as one on disk does,
     and the file a person was sent is the one carrying it. Nothing was looking
-    until now, here or anywhere else this project has seen.
+    until now.
 
     One level only. A package inside a package is not descended into, because
     a document that carries itself would otherwise be read forever, and the

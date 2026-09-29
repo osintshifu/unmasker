@@ -59,7 +59,7 @@ column with `table:display="false"` on a column style, which is what the ODF
 specification suggests. LibreOffice **silently dropped it** — in both exports.
 The form that round-trips is `table:visibility="collapse"` on the column
 itself. A fixture built from the specification would have hidden nothing and
-the test suite would have been green about it, which is the `filetrail` HEIC
+the test suite would have been green about it, which is the standing
 bug wearing new clothes.
 
 **A cell address has to be counted.** ODF writes no `r="D4"`. Position comes

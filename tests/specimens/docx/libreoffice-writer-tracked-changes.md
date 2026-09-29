@@ -83,6 +83,6 @@ reporting the encoding rather than the text.
   Covered synthetically, not by a producer.
 - **Formatting changes** (`w:rPrChange`). Deliberately: they carry an author and
   no hidden text, so the tool remarks on them and reports nothing.
-- **Word itself.** Word is not on this machine. LibreOffice writes valid OOXML
+- **Word itself.** Word is not available here. LibreOffice writes valid OOXML
   revision markup, but the two do not agree about everything, and this is the
   same producer-coverage gap the PDF specimens have.

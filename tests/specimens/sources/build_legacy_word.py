@@ -19,7 +19,7 @@ Measured on the file this script writes:
 That second line is the reason this specimen exists before the reader does. A
 compound-file reader written from the specification would be entitled to leave
 the mini stream for later, and against this file it would read **nothing at
-all** - which is how `filetrail`'s HEIC reader passed a full test suite while
+all** - which is how a reader like this passes a full test suite while
 decoding no HEIC ever written.
 
 Everything in the metadata is invented.

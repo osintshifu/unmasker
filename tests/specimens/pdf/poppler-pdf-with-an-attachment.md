@@ -39,7 +39,7 @@ Everything is invented: no such tender, no such panel, no such bidder.
 `pdfattach` writes the entry the way a real tool writes one, into the name
 tree, with entries that may be indirect. Assembling one here from the
 specification would prove the detector reads a structure this repository built,
-which is the mistake `filetrail`'s HEIC reader was built on.
+which is the mistake this kind of reader is built on.
 
 ## The control
 

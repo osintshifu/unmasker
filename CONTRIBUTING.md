@@ -1,8 +1,8 @@
 # Contributing
 
-Thank you for looking. This project has a small number of rules and every one
-of them was paid for by a bug. They are worth reading before writing code,
-because a change that breaks one of them will be asked to change back.
+Thank you for looking. This project has a small number of rules, and they are
+worth reading before writing code: a change that breaks one of them will be
+asked to change back.
 
 ## Setting up
 
@@ -32,10 +32,10 @@ Everything below follows from that.
 This is the rule that matters most, and it is not negotiable.
 
 A fixture built from a specification proves that your reader agrees with your
-reading of the spec. It does not prove it agrees with LibreOffice. The sibling
-project `filetrail` had a HEIC reader with a fully green test suite that
-decoded nothing at all on every real file, because every fixture had been built
-from the standard and no real encoder writes files that way.
+reading of the spec. It does not prove it agrees with LibreOffice. A reader
+built that way can decode nothing at all on every real file and still hold a
+fully green test suite, because no real encoder writes files the way the
+standard reads.
 
 So:
 
@@ -56,8 +56,7 @@ will — that is the most valuable thing in your pull request. Write it down.
 ## Watch the test fail first
 
 Write the test, run it, read the failure, *then* implement. A test written
-afterwards passes against broken code, and this project has caught itself
-doing that twice.
+afterwards passes against broken code.
 
 Check the failure is the one you expected. An `ImportError` is not evidence
 that your test works.
@@ -66,12 +65,8 @@ that your test works.
 
 Before opening a pull request, take each claim your docstrings make, break it
 in the source, and run the suite. Anything that stays green is a claim nothing
-is holding.
-
-This has found something every single time it has been run here — most
-recently a guard that could not fail because the fixture feeding it had a
-default that made the question moot. If you find one, the fix is a test, and
-that test is the interesting part of the change.
+is holding. If you find one, the fix is a test, and that test is the
+interesting part of the change.
 
 ## Report a line, never a show-operation
 
@@ -80,15 +75,14 @@ text one drawing operation carries. Chrome writes one glyph per `Tj`; tesseract
 writes one operation per word. Group by **line on the page**, using
 `detectors._lines`, or a single hidden line becomes eighty-seven findings.
 
-That rule has been broken five times in this codebase.
-`test_no_detector_reports_per_show_operation` now asks the question directly.
+`test_no_detector_reports_per_show_operation` asks the question directly.
 
 ## Do not rank findings against each other
 
 A page can have a bar over its text *and* invisible characters *and* stale
-metadata. Those are three findings, not one winner. `filetrail` printed the
-winner once, and a geotagged photograph that had been downloaded reported its
-URL and no GPS at all.
+metadata. Those are three findings, not one winner. Ranking them means the
+stronger claim deletes the more valuable one: a geotagged photograph that had
+also been downloaded would report its source URL and no GPS at all.
 
 Nothing here sorts by strength, and `Finding` carries no score.
 
@@ -140,24 +134,14 @@ not what the tool did, which is what keeps it a flag.
   disproved by the first thing a reader tries loses credibility for everything
   else on it.
 
-The report's layout and palette are the sibling project `filetrail`'s, and its
-`DESIGN.md` is the design language for both — **read it before inventing a
-second one.** The same goes for anything it already solves: its embedded
-metadata sources read PDF, OOXML, ODF, legacy OLE2 and EXIF, and were read
-before the metadata reader here was written.
-
-What is deliberately *not* shared is the identity. `filetrail` is a terminal;
-`unmasker` is the document the terminal is looking at.
-
 ## Commits
 
 Prose, and no trailers. Say what changed and **why** — the why is the part
 that cannot be recovered from the diff. If a change corrects an earlier
-assumption, say what the assumption was; those are the most useful messages in
-this repository's history.
+assumption, say what the assumption was.
 
-Stage deliberately. `git add -A` once swept a build archive into two commits of
-the sibling project and it reached a public repository.
+Stage deliberately. Name the paths, or check `git status` first; `git add -A`
+is how a build artefact reaches a public repository.
 
 ## What a good pull request looks like
 

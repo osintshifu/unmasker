@@ -125,8 +125,8 @@ class Rect:
         """Whether this is page-sized.
 
         The page clip is a filled-looking rectangle in every file, and it is
-        never a redaction bar. `filetrail`'s lesson about context applies: the
-        shape alone cannot say, but its size against the page can.
+        never a redaction bar. Context decides: the shape alone cannot say,
+        but its size against the page can.
         """
         return self.width >= page.width * fraction and self.height >= page.height * fraction
 

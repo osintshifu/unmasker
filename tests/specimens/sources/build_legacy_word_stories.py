@@ -18,7 +18,7 @@ had searched it - and the half it skipped is the half worth reading: a comment
 naming the second bidder, a header marked *internal circulation only*, a
 footnote about a withdrawal, a text box saying the figures are not approved.
 
-That is the `filetrail` HEIC failure in a new costume, and it is why this file
+That is the standing failure in a new costume, and it is why this file
 exists before the reader that reads it.
 
 Three more things are here because a real producer writes them and a

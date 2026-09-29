@@ -1,13 +1,11 @@
 """What a file says about itself, and what kind of thing each field is.
 
-`filetrail` reads these same fields, and more containers than this does. It
-answers a different question with them - *where did this file come from* - and
-reports each as an origin claim. `the sibling project's
-embedded metadata sources documents.py` is the implementation, and it was read before this one
-was written, as `CONTRIBUTING.md` requires. Two things were taken from it: that dates
-have to be normalised out of each container's own format, and that every
-property should be kept rather than a chosen few, because no fixed list
-anticipates which one an investigation will want.
+Reading these fields to answer *where did this file come from* is a different
+job, and a tool built for it reports each field as an origin claim. Two things
+carry over from that reading regardless: dates have to be normalised out of
+each container's own format, and every property should be kept rather than a
+chosen few, because no fixed list anticipates which one an investigation will
+want.
 
 What is different here is the roles.
 
@@ -188,9 +186,9 @@ def _pdf_date(value: str) -> str:
 def read_pdf(reader) -> Metadata:
     """Read a PDF's Info dictionary through pypdf.
 
-    `filetrail` scans the raw bytes for these, because it carries no runtime
-    dependencies and cannot ask anyone. This project already depends on pypdf
-    and the argument for that is written down, so it asks.
+    Scanning the raw bytes for these works, and is what a tool carrying no
+    runtime dependencies has to do. This project already depends on pypdf and
+    the argument for that is written down, so it asks instead.
     """
     try:
         info = reader.metadata or {}

@@ -44,8 +44,7 @@ jobs:
       # runs the real thing on every platform. `--ocr` is not exercised: it
       # needs ghostscript and tesseract, and `tests/test_ocr.py` skips rather
       # than failing over their absence. Every test that shells out is guarded
-      # the same way - the first CI run failed because one of them was not, and
-      # nothing on this machine could have told us.
+      # the same way, because a missing binary must skip rather than fail.
       - name: Tests
         run: pytest
 

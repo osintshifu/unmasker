@@ -60,7 +60,7 @@ that detector since it was written, and only a rotated page could say so.
   at the same height never merge into a line that exists nowhere on the page.
 - **The distance across the line**, measured by projecting onto the
   perpendicular of the text direction. For horizontal text this is exactly the
-  baseline height it used to be.
+  baseline height.
 - **The glyph's origin rather than its box.** The origin is on the baseline;
   the box's bottom edge is the descent, which a smaller font puts somewhere
   else — so a superscript now stays on the line it belongs to.

@@ -20,7 +20,7 @@ concealment. It is read and not reported, and the distinction is a test.
 
 Appearance streams. An annotation may carry an `/AP` form that paints anything
 at all, including a black rectangle over text, and nothing here interprets one.
-That is a real technique and it needs a producer this machine does not have -
+That is a real technique and it needs a producer not available here -
 `tests/specimens/README.md` names it.
 """
 

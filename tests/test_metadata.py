@@ -1,8 +1,8 @@
 """Metadata: what the file says about itself that the document never shows.
 
-`filetrail` already reads these fields, and reads more containers than this
-does. It answers a different question with them - *where did this file come
-from* - and reports every field as an origin claim. What is added here is the
+Reading these fields to answer *where did this file come from* is a different
+job, and a tool built for it reports every field as an origin claim. What is
+added here is the
 gap: a value in the metadata that the document does not show is something a
 reader of the page cannot know, and that is this tool's subject.
 
@@ -87,7 +87,7 @@ def test_tool_fields_are_never_findings():
 
 
 def test_every_field_is_kept_even_when_it_is_not_reported():
-    """filetrail's rule: no fixed list anticipates which property an
+    """No fixed list anticipates which property an
     investigation will want. Nothing is dropped from the record; the roles only
     decide what becomes a finding."""
     names = {f.name for f in docx_meta().fields}

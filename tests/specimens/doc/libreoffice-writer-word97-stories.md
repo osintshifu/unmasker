@@ -30,7 +30,7 @@ name the second bidder here*, a header marked *internal circulation only*, a
 footnote recording a withdrawal, a text box saying the figures are not
 approved.
 
-That is `filetrail`'s HEIC failure arriving in a new format. Its reader took
+That is the standing failure of this kind of reader in a new format. A reader that took
 the first `Exif\0\0` in the file, which the specification does describe, and
 decoded nothing from any real HEIC while its suite stayed green.
 

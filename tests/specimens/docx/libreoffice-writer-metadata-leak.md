@@ -65,8 +65,7 @@ Two rules at once.
 **Most metadata is not a finding.** `Application`, `AppVersion`, the dates and
 the counts are remarks. Every .docx has them, and a tool that reported them
 would exit non-zero on every document ever written — which would make the exit
-code, the whole CI gate this project has instead of a `--strict` mode, mean
-nothing.
+code, the CI gate that stands here instead of a `--strict` mode, mean nothing.
 
 **What the document does not show is.** A value is reported when the
 document's own text does not contain it. That is the same rule the rest of the

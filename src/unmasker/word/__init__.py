@@ -17,9 +17,9 @@ character-position space, and the FIB says how much of it belongs to what:
 In the stories specimen the main story is 267 characters of 504. A reader that
 took `[0, ccpText)` would search just over half the file and then report having
 searched it - and the part it skipped holds the comment naming a bidder and the
-header marked *internal circulation only*. That is `filetrail`'s HEIC failure
-arriving in a new format: a reader correct against the specification, decoding
-nothing that matters from anything real.
+header marked *internal circulation only*. That is the standing failure of
+this kind of reader: correct against the specification, and decoding nothing
+that matters out of anything real.
 
 **A hyperlink is a field, not a run.** The bytes hold
 `0x13 HYPERLINK "https://..." 0x14 published summary 0x15` - an instruction, a
@@ -57,7 +57,7 @@ IDENT = 0xA5EC
 
 #: The oldest FIB this reader understands. LibreOffice's "Word 97" export
 #: writes 257, not 193 - a version check for equality would refuse the only
-#: producer on this machine.
+#: producer used for the specimens here.
 OLDEST = 193
 
 FENCRYPTED = 0x0100
@@ -358,9 +358,8 @@ def _merged(marked: list[tuple[int, int, Run]]) -> list[tuple[int, int, Run]]:
 
     A hidden phrase with a bold word inside it is three runs in the property
     table and one hidden phrase on the page. Reporting it as three findings is
-    the `filetrail` lesson about one hidden line arriving as eight, reached
-    from a new direction - and a reader who is given three has to work out for
-    themselves that they are one.
+    the same mistake as one hidden line arriving as eight - and a reader who
+    is given three has to work out for themselves that they are one.
     """
     joined: list[tuple[int, int, Run]] = []
     for start, end, run in marked:

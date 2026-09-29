@@ -7,11 +7,8 @@
     against a word of eight. Nothing is removed - `ker` escapes because the bar
     was dragged too short, which is exactly how a failed redaction is made.
 
-    Paper and ink, not a terminal. `filetrail` is a dark screen; this is the
-    document the screen is looking at. The two tools share a design language
-    and the rule that colour encodes how the tool knows - they do not share an
-    identity, and a reader with both installed should never have to wonder
-    which one is talking.
+    Paper and ink, not a terminal: this is the document, not the screen
+    looking at it.
 
     Geometry: a monospace advance is 0.6em, so eight characters at 72px is
     345.6 wide and the five the bar covers are 216. Every x below is derived

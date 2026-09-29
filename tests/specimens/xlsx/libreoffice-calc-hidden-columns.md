@@ -68,7 +68,7 @@ thirty-nine.
 **A value hidden twice over is reported twice.** `196000` sits in the hidden
 row *and* the hidden column, and both findings quote it. They are two answers
 to two questions, and `CONTRIBUTING.md` forbids ranking one against the other — the
-`filetrail` failure where the stronger claim deleted the more valuable one.
+failure where the stronger claim deletes the more valuable one.
 
 **Nothing visible may be reported as hidden.** `Nowak Systemy SA` is on the
 screen. A detector that named it would be calling the visible document a
@@ -84,7 +84,7 @@ concealment, which is the same error as reporting a tracked insertion.
   writes no `autoFilter` element at all, so the difference cannot be recovered
   from an .xlsx LibreOffice wrote. See
   [`ods/libreoffice-calc-filtered-rows.ods`](../ods/libreoffice-calc-filtered-rows.md).
-- **Excel itself.** Excel is not on this machine. LibreOffice writes valid
+- **Excel itself.** Excel is not available here. LibreOffice writes valid
   SpreadsheetML, but two producers never agree about everything — the PDF
   specimens proved that twice.
 - **Number formatting.** The cells hold bare integers. A formatted cell shows

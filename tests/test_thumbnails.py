@@ -200,7 +200,7 @@ def test_a_jpeg_whose_thumbnail_offset_points_outside_the_file_is_not_a_crash(tm
 # bounds checks that make that claim true. No specimen can reach them: a file
 # ImageMagick wrote is well formed by construction, so the offsets are crafted.
 #
-# Mutation testing is what said so - each of these was a guard nothing held.
+# Each of these covers a guard that no other test holds.
 # --------------------------------------------------------------------------
 
 import struct  # noqa: E402

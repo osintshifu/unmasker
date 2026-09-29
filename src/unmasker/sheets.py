@@ -19,8 +19,7 @@ Three rules decide the shape of what gets reported.
 
 **A run of hidden rows is one finding, not one per row.** Hiding rows 10 to 40
 is one act by one person, and both formats express it as a range anyway. A
-finding per row is the `filetrail` lesson about a report nobody finishes,
-arriving from a new direction.
+finding per row is a report nobody finishes.
 
 **Rows and columns inside a hidden sheet are not reported.** The sheet is
 already the finding. Saying that row 4 of an invisible sheet is also invisible

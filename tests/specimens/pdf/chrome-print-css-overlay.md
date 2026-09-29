@@ -13,7 +13,7 @@ They do disagree. See below.
 
 ## How it was made
 
-`sources/build_chrome_print.py`, on this machine, 2026-08-31:
+`sources/build_chrome_print.py`, 2026-08-31:
 
 ```bash
 python3 tests/specimens/sources/build_chrome_print.py \

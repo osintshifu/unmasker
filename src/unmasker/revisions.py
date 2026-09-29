@@ -19,9 +19,9 @@ same thing with an annotation, and that finding shares this name.
 
 **`revision-history`** — exactly one, for the whole file. Who edited a document
 and when is *one fact about the document*, not one fact per change. A draft
-with two hundred insertions must not produce two hundred findings; that is the
-`filetrail` lesson about a report nobody finishes reading, arriving from a new
-direction. It is `SELF_REPORTED`, which is what that class was defined for: the
+with two hundred insertions must not produce two hundred findings; that is a
+report nobody finishes reading.
+It is `SELF_REPORTED`, which is what that class was defined for: the
 file's own account of itself, believed only as far as a file can be. An author
 name in a document is whatever the application was configured to say.
 """

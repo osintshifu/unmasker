@@ -1,8 +1,7 @@
 """The terminal report.
 
-The layout is `filetrail`'s, described in the sibling project's design notes, because
-`CONTRIBUTING.md` says to read that before inventing a second design language. What
-carries over:
+The layout follows an established design language rather than a second one
+invented here. What that settles:
 
 - **No boxes.** A frame costs two columns on every line it wraps, and nothing
   in a forensic report needs to be in one. Grouping is a one-character gutter.
@@ -14,9 +13,9 @@ carries over:
 - **A column is sized per section, not once per screen.** One global width
   makes a layout look *almost* aligned, which reads worse than not aligning.
 
-What is new here is the shape of an entry. `filetrail` answers "where did this
-come from"; unmasker answers "what does this look like, against what does it
-say", so every entry is two readings and the gap between them.
+What is particular to unmasker is the shape of an entry. It answers "what does
+this look like, against what does it say", so every entry is two readings and
+the gap between them.
 """
 
 from __future__ import annotations

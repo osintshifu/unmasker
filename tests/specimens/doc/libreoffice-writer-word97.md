@@ -35,7 +35,7 @@ mini stream for later — and against this file, which is an entirely ordinary
 one, it would read **nothing at all** while passing any test suite built the
 same way it was.
 
-That is the HEIC failure exactly: `filetrail`'s reader took the first
+That is the standing failure exactly: a reader that takes the first
 `Exif\0\0` in the file, which the specification does describe, and decoded
 nothing from any real HEIC while its suite stayed green.
 
@@ -68,9 +68,9 @@ nothing could say the page does not show her.
 
 ## What this specimen does not cover
 
-Producers other than LibreOffice. Word itself is not on this machine. The
+Producers other than LibreOffice. Word itself is not available here. The
 container reader was checked against two Excel 97 workbooks written by
 something else, which parsed and gave up their property streams; those files
-are the author's own and are not in this repository.
+are private and are not in this repository.
 
 Everything in the metadata is invented.

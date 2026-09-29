@@ -5,11 +5,8 @@ classes once and can then triage by eye. There is no red-means-danger scheme
 here and there must never be one: severity is the reader's judgement, and a tool
 that colours by severity has made that judgement for them.
 
-The palette is `filetrail`'s, deliberately. Its `DESIGN.md` is the design
-language for both tools, and someone who has learned the hues there should not
-have to learn them again. `direct` takes the green slot that `filetrail` gives
-to `recorded`: in both, it is the strongest class and it means *this was
-observed, not inferred*.
+`direct` takes the green slot, because it is the strongest class and it means
+*this was observed, not inferred*.
 """
 
 from __future__ import annotations

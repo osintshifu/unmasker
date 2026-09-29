@@ -7,8 +7,8 @@ Three rules from `CONTRIBUTING.md` are load-bearing here and each has a test:
   to read the report.
 - **"Nothing found" has two meanings**, and the report must not let them blur.
 - **Every command the tool prints must run in the shell that printed it.**
-  `filetrail` printed `filetrail --help` at someone who had not installed it,
-  and the screen was disproved by the first thing they tried.
+  A screen that names a command the reader cannot run is disproved by the
+  first thing they try.
 
 The exit code is the CI gate. There is deliberately no
 `--strict`: the default non-zero exit when findings exist *is* the gate, and a
@@ -122,7 +122,7 @@ def test_the_two_meanings_of_nothing_found_read_differently(capsys, tmp_path):
 
 
 def test_every_command_the_report_prints_can_actually_be_run(capsys, tmp_path):
-    """filetrail printed a command at a user who had not installed the tool."""
+    """A report must not print a command the reader cannot run."""
     f = tmp_path / "note.txt"
     f.write_text("pay​load", encoding="utf-8")
     _, out, _ = run(capsys, str(f))

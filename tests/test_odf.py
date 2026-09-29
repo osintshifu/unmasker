@@ -159,8 +159,8 @@ def test_the_history_is_one_finding_here_too():
 
 
 def test_the_authorship_caveat_does_not_name_word_on_an_odf_file():
-    """It used to say `whatever the copy of Word was configured to say`, which
-    is not true of a file LibreOffice wrote in its own format."""
+    """`whatever the copy of Word was configured to say` is not true of a file
+    LibreOffice wrote in its own format."""
     (found,) = [f for f in detect(record()) if f.detector == "revision-history"]
     assert "Word" not in found.summary
 

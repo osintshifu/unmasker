@@ -14,10 +14,8 @@ is what a human sees; the bottom is what a machine reads; the gap between them
 is the entire tool. It needs no caption, and it is drawn in the only two rows a
 terminal can be relied on to give you.
 
-It is unmasker's own and deliberately not `filetrail`'s wordmark in another
-font. The two share a design language and the rule that colour encodes how the
-tool knows rather than how bad the finding is. They do not share an identity: a
-reader with both installed should never have to wonder which one just printed.
+It is unmasker's own wordmark rather than a borrowed one set in another font:
+a reader should never have to wonder which tool just printed.
 
 ## The shape below it is everybody's
 

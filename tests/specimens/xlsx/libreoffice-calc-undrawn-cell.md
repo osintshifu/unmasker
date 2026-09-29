@@ -36,7 +36,7 @@ left to print, because claiming a visible figure is hidden is the worse of the
 two mistakes.
 
 `;;;` itself is handled by the same rule and **not verified against a real
-file**: nothing on this machine writes one.
+file**: no available producer writes one.
 
 ## What this cost before it was read
 

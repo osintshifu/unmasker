@@ -37,10 +37,9 @@ reader that opened `revisionLog1.xml` and stopped would report one change out
 of three — and give no sign it had stopped, which is the failure mode this
 project cares about most.
 
-That is not hypothetical. The first probe of this file looked only at
-`revisionLog1.xml`, concluded the .xlsx export was dropping the other two
-changes, and the builder's docstring said so for a while. It was wrong: the
-export keeps everything, in parts two and three.
+That is not hypothetical: reading `revisionLog1.xml` alone reports one change
+and reads as evidence that the .xlsx export is lossy. It is not - the export
+keeps everything, in parts two and three.
 `test_every_log_part_is_read_and_not_only_the_first` asserts the specimen still
 has three parts, so the day it stops exercising this the suite says so instead
 of quietly passing.

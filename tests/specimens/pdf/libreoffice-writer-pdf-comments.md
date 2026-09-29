@@ -69,7 +69,7 @@ anything at all, including a black rectangle over text, and nothing here
 interprets one. A bar drawn that way would be invisible to every detector in
 this project.
 
-It is not in this specimen because no producer on this machine writes one:
+It is not in this specimen because no available producer writes one:
 LibreOffice draws its shapes into the content stream, and a `/Square`
 annotation written by hand renders in nothing — Ghostscript ignores it without
 an `/AP`, which is exactly why the appearance stream is the thing that matters.

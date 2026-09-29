@@ -22,7 +22,7 @@ LibreOffice writes the two-page document. **pypdf** performs the incremental
 delete, because it is a real writer used in real pipelines and it decides the
 byte layout of the update, not this script - a layout invented here would only
 prove the detector can read what this repository invented, which is the mistake
-`filetrail`'s HEIC reader was built on.
+this kind of reader is built on.
 
 pypdf is also this project's own parser, so the specimen is checked against
 `qpdf`, an independent implementation, and the detector reads revision

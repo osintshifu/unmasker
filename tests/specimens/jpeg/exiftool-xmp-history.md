@@ -35,7 +35,7 @@ The software agent names an application that never touched this file, the
 document it claims to derive from does not exist, and the dates are invented.
 The packet is written by exiftool rather than assembled here, because a packet
 built to match the specification proves nothing about the packets real editors
-write — which is the lesson `filetrail`'s HEIC reader paid for.
+write.
 
 ## The control
 

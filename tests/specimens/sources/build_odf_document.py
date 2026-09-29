@@ -16,7 +16,7 @@ This document has six of them at once:
     metadata             an author, a working title and a custom property
     a zero-width space   inside an address, in the body text
 
-The insertion and the header are here because mutation testing asked for them:
+The insertion and the header are here for the tests that need them:
 without an insertion nothing distinguished the two kinds of region, and without
 a header nothing said `styles.xml` was read at all. The comment sits
 mid-sentence for the same reason - skipping a subtree must not swallow what

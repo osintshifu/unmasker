@@ -18,8 +18,7 @@ whole job:
 
 Each of those is suppressed here, and each has a test. A detector that fires on
 them teaches its reader to skip the report, and a report that gets skipped is
-worth less than no report - which is the same lesson `filetrail` learned about
-ranking claims, arriving from a different direction.
+worth less than no report.
 
 ## What it deliberately does not do
 
@@ -536,8 +535,8 @@ def scan_text(text: str) -> list[Finding]:
     """Every tier-2 finding in `text`, in document order.
 
     Order is position, never strength. Nothing here ranks a bidi override
-    against a homoglyph: they are different questions, and `filetrail` proved
-    what happens when different questions are made to compete.
+    against a homoglyph: they are different questions, and making different
+    questions compete deletes the more useful answer.
     """
     if not text:
         return []

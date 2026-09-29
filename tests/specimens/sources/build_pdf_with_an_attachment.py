@@ -23,7 +23,7 @@ Everything is invented: no such tender, no such panel, no such bidder.
 measurement has to come from something other than the code under test. The
 attachment is therefore written the way a real tool writes one, into
 `/Names/EmbeddedFiles`, rather than assembled here from the specification -
-which is the mistake `filetrail`'s HEIC reader was built on.
+which is the mistake this kind of reader is built on.
 
 ## The control
 

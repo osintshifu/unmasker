@@ -142,9 +142,9 @@ def _note(ranges: dict[str, list[tuple[int, int]]], node, index: int, span: int)
     """File this row or column under the visibility it declares, if any.
 
     One branch per value rather than a membership test followed by a second
-    discrimination later: mutation testing showed that arrangement had a
-    redundant guard in it, where breaking the guard changed no answer because
-    the later step re-decided the same question.
+    discrimination later: that arrangement carries a redundant guard, where
+    breaking the guard changes no answer because the later step re-decides the
+    same question.
     """
     if span > TAIL:
         # The empty tail of the sheet rather than content.

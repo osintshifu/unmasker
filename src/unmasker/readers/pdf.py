@@ -187,8 +187,8 @@ def _how_to_ocr() -> str:
     """Name the flag only when it would actually work.
 
     `CONTRIBUTING.md`: every command the tool prints must run in the shell that
-    printed it. `filetrail` printed `filetrail --help` at somebody who had not
-    installed it, and the screen was disproved by the first thing they tried.
+    printed it. A screen naming a command the reader cannot run is disproved
+    by the first thing they try, and loses credibility for everything else.
     """
     from ..pdf.rendered import tools_available
 

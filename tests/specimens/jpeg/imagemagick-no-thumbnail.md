@@ -33,7 +33,6 @@ The test that needed a photograph without a preview originally shelled out to
 Ubuntu and macOS with `FileNotFoundError` - and on Windows it found the NTFS
 `convert` utility under the same name and failed with exit status 4.
 
-`CONTRIBUTING.md` already names this failure once: every test that shells out
-is guarded, and the first CI run failed because one of them was not. This is
-the same lesson arriving a second time, and the answer is the one this project
-already gives everywhere else - commit the specimen.
+`CONTRIBUTING.md` names the rule: every test that shells out has to be
+guarded, because a missing binary must skip rather than fail. The answer here
+is the one the rest of the corpus gives - commit the specimen.

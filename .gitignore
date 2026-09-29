@@ -5,6 +5,7 @@ dist/
 build/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .venv/
 venv/
 .vscode/
@@ -17,16 +18,6 @@ htmlcov/
 # inside that repository is redundant the day it is made and wrong after it.
 *.zip
 
-# Specimens are the test suite here and DO belong in git - see CLAUDE.md.
-# Only genuinely private material is excluded.
+# Specimens are the test suite here and belong in git. Only genuinely private
+# material is excluded.
 private-samples/
-
-# Working notes, not documentation, and the only two files here that are not
-# published. HANDOFF.md is the running log of what was tried and what it cost,
-# and it names files in a sibling checkout that are private. CLAUDE.md is how
-# to work in this repository rather than what the tool does.
-#
-# CONTRIBUTING.md is tracked, deliberately: its rules are each named after the
-# failure that produced them, and that is worth publishing.
-HANDOFF.md
-CLAUDE.md

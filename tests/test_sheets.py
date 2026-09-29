@@ -234,10 +234,10 @@ def test_a_record_with_nothing_hidden_produces_no_findings(specimen):
 
 
 # --------------------------------------------------------------------------
-# what mutation testing asked for
+# claims a docstring makes that need a test of their own
 #
-# Every test below covers a claim a docstring already made and no test held to.
-# The mutation harness broke each claim in turn and the suite stayed green.
+# Every test below covers a claim a docstring makes. Break the claim in the
+# source and one of these has to go red.
 # --------------------------------------------------------------------------
 
 from unmasker.sheets import Cell, Sheet, SheetRecord, column_name  # noqa: E402
@@ -325,8 +325,8 @@ def test_a_very_hidden_sheet_says_it_cannot_be_undone():
 # the readers, on archives built for one question each
 #
 # Synthetic, and deliberately so: each of these isolates a producer behaviour
-# the specimens carry only incidentally, or one no producer on this machine
-# emits at all. The specimens remain the proof that the readers work; these
+# the specimens carry only incidentally, or one no available producer emits
+# at all. The specimens remain the proof that the readers work; these
 # are the proof that they work for the stated reason.
 # --------------------------------------------------------------------------
 
@@ -647,7 +647,7 @@ def test_the_two_families_agree_about_the_hidden_date():
 
 
 # --------------------------------------------------------------------------
-# number formats no producer on this machine writes
+# number formats no available producer writes
 #
 # LibreOffice defines every format explicitly, exports `date1904="false"`, and
 # was not asked for a time of day. Each of these is the behaviour the specimen
@@ -712,11 +712,10 @@ def test_a_date_letter_inside_a_quoted_literal_is_not_a_date():
     renders the number as one - a quotation that is not merely imprecise but a
     different kind of thing.
 
-    The literal has to contain a *real* token to discriminate. An earlier
-    version of this test used `0.00"m"`, which passes whether or not the
-    quoting is honoured, because `m` alone is ambiguous between month and
-    minute and is deliberately not a token on its own. Mutation testing caught
-    it passing for the wrong reason.
+    The literal has to contain a *real* token to discriminate. `0.00"m"`
+    would pass whether or not the quoting is honoured, because `m` alone is
+    ambiguous between month and minute and is deliberately not a token on its
+    own.
     """
     assert not _is_date_format(0, '0.00" days"')
     assert not _is_date_format(0, '#,##0" hours"')

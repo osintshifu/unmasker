@@ -1,6 +1,6 @@
 # Specimens
 
-Specimens live here and **are committed**, unlike the sibling project's corpus.
+Specimens live here and **are committed**: they are the test suite.
 They are the test suite: a detector written against a hand-built fixture proves
 nothing about a document a real producer wrote.
 
@@ -88,10 +88,10 @@ carry different amounts of the same metadata and a tool tried on one of them
 would have a partial idea of what metadata is. The spreadsheet pair is the same
 argument about hiding: OOXML writes it as an attribute on the thing hidden, ODF
 puts a whole sheet's visibility behind a named style, and a reader that got
-either wrong would disagree with the other. The .ods of that pair is also the
-file that caught the worst bug this project has had - `unmasker` read its
-hidden row, hidden column and hidden sheet as ordinary visible prose and then
-reported the workbook clean.
+either wrong would disagree with the other. The .ods of that pair also guards
+the worst failure available to this tool: reading a hidden row, hidden column
+and hidden sheet as ordinary visible prose and then reporting the workbook
+clean.
 
 ## Rebuilding them
 
@@ -134,7 +134,7 @@ Named here so their absence is not mistaken for coverage:
   `/Rotate` entry rather than by the content stream. The grouping is general -
   it projects onto the text direction - but only the right angle is exercised
   by a producer.
-- **Producers not on this machine.** Acrobat and Word draw their own way, and
+- **Producers not available here.** Acrobat and Word draw their own way, and
   LibreOffice and Chrome already disagree with each other.
 - **A signed PDF**, and with it the whole question of signature coverage. A
   signature's `/ByteRange` names the bytes it covers, and a file longer than
@@ -193,7 +193,7 @@ Named here so their absence is not mistaken for coverage:
   a deletion always quotes nothing and the other path is untested.
 - **A tracked insertion**, and a formatting-only revision (`rfmt`), which is
   the spreadsheet's `w:rPrChange`.
-- **Excel and Word themselves.** Neither is on this machine, so every OOXML
+- **Excel and Word themselves.** Neither is available here, so every OOXML
   file here was written by LibreOffice.
 - **Excel's BIFF records and PowerPoint's record stream.** Word's piece table
   is read since 0.3.0; these two are each a separate problem of their own size
@@ -229,13 +229,13 @@ Named here so their absence is not mistaken for coverage:
   machine to test a reader of the longer form against.
 - **PowerPoint itself**, and a presentation comment (`ppt/comments/`), which
   LibreOffice does not write. Decks were the one gap here that no amount of
-  code could close - nothing on this machine could write one until
+  code could close - no available producer could write one until
   `libreoffice-impress` was installed.
 - **A slide with `show="1"`**, which PowerPoint writes and LibreOffice omits,
   and **a deck whose slide parts are numbered out of order**. Both are held by
   synthetic tests, because the specimen cannot tell the two implementations
-  apart — and mutation testing is what said so.
-- **Word's own OOXML.** Word is not on this machine, so every DOCX here was
+  apart.
+- **Word's own OOXML.** Word is not available here, so every DOCX here was
   written by LibreOffice. It emits valid revision markup, but two producers
   never agree about everything — the PDF specimens proved that twice.
 - **`w:moveFrom` / `w:moveTo` from a real producer.** LibreOffice does not emit

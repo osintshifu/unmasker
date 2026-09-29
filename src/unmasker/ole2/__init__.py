@@ -3,8 +3,8 @@
 `.doc`, `.xls` and `.ppt` are each a FAT filesystem in a single file - sectors,
 an allocation table, a directory tree - with a second, smaller filesystem
 nested inside for streams below a cutoff, normally 4096 bytes. Nothing in the
-standard library reads one, and this project has one runtime dependency which
-is not becoming two, so it is written here.
+standard library reads one, and one runtime dependency is not becoming two,
+so it is written here.
 
 **The mini stream is not optional.** In a real Word 97 document every stream
 worth having - the metadata, the text, the table - is under the cutoff and

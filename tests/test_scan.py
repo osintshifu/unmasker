@@ -9,8 +9,8 @@ different answer.
 
 `CONTRIBUTING.md` forbids ranking findings against each other, and a directory
 report is where that rule is hardest to keep: every instinct says to sort the
-worst files to the top. The sibling project's answer is taken wholesale
-instead. Count **files per kind of finding**, list the files that hide
+worst files to the top. So it does not: count **files per kind of finding**,
+list the files that hide
 something in path order, and never claim one is worse than another. A reader
 still knows where to look and the tool still has not judged for them.
 

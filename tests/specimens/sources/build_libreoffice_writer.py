@@ -39,7 +39,7 @@ from pathlib import Path
 
 CM_PER_PT = 2.54 / 72.0
 
-# A4 portrait, the LibreOffice default on this machine.
+# A4 portrait, the LibreOffice default.
 PAGE_W_CM = 21.0
 PAGE_H_CM = 29.7
 PAGE_H_PT = PAGE_H_CM / CM_PER_PT
@@ -107,10 +107,9 @@ def fodt(bars: list[dict] | None = None, remove_text: bool = False) -> str:
     are placed from the measurements of the unredacted pass, so the two files
     differ only in whether the text is still there.
 
-    (An earlier version of this docstring claimed the values were monospaced,
-    so the substitution could not move anything. They are not: the Field style
-    names Liberation Mono but nothing declares that font face, and LibreOffice
-    substitutes Liberation Serif.)
+    (The values are not monospaced, though the styling suggests it: the Field
+    style names Liberation Mono, nothing declares that font face, and
+    LibreOffice substitutes Liberation Serif.)
     """
     shapes = ""
     for b in bars or []:

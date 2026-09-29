@@ -8,8 +8,8 @@ question from *what is hidden in this one*, and it needs a different answer.
 
 `CONTRIBUTING.md` forbids ranking findings against each other, and this is
 where that rule is hardest to keep: every instinct says to sort the worst files
-to the top. So the survey does what the sibling project does instead - it
-counts **files per kind of finding** and lists the files in path order. A
+to the top. So the survey counts **files per kind of finding** instead and
+lists the files in path order. A
 reader still learns where to look, and the tool still has not decided for them
 which document matters most.
 
