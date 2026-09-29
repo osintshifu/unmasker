@@ -68,6 +68,15 @@ def test_every_release_this_file_links_to_was_actually_tagged():
     the answer has to be the same on a machine with no route out, and a test
     that reaches the internet fails for reasons that are not about this file.
     """
+    shallow = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"], cwd=ROOT, capture_output=True, text=True
+    )
+    if shallow.returncode != 0:
+        pytest.skip("not a git checkout, so there are no tags to check against")
+    # A checkout made from a tag, the way CI makes one, is shallow and holds
+    # that tag alone, so every other release would read as never tagged.
+    if shallow.stdout.strip() == "true":
+        pytest.skip("a shallow checkout holds only the tag it was made from")
     tags = subprocess.run(
         ["git", "tag"], cwd=ROOT, capture_output=True, text=True, check=True
     ).stdout.split()
